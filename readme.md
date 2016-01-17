@@ -36,6 +36,7 @@ var fs = require('fs');
 var isObject = require('isobject');
 var Schema = require('map-schema');
 
+// create a schema
 var schema = new Schema()
   .field('name', 'string')
   .field('description', 'string')
@@ -46,7 +47,6 @@ var schema = new Schema()
   })
   .field('main', 'string', {
     validate: function(filepath) {
-      console.log(filepath)
       return fs.existsSync(filepath);
     }
   })
@@ -58,7 +58,9 @@ var schema = new Schema()
   })
 
 var pkg = require('./package');
+// normalize an object
 console.log(schema.normalize(pkg));
+// validation errors array
 console.log(schema.errors);
 ```
 
