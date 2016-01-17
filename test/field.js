@@ -1,3 +1,5 @@
+'use strict';
+
 require('mocha');
 var assert = require('assert');
 var Field = require('../lib/field');
