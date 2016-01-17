@@ -55,6 +55,11 @@
     },
     "plugins": [
       "gulp-format-md"
+    ],
+    "layout": "default",
+    "reflinks": [
+      "normalize-pkg",
+      "isobject"
     ]
   }
 }
