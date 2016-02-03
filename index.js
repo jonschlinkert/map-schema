@@ -110,9 +110,6 @@ Schema.prototype.field = function(name, type, options) {
   var field = new Field(type, options || {});
   field.name = name;
 
-  if (typeof field.normalize === 'function') {
-    this.fns.push(field);
-  }
   if (field.hasOwnProperty('default')) {
     this.defaults[name] = field.default;
   }
@@ -230,22 +227,46 @@ Schema.prototype.isRequired = function(name) {
  * @return {Object} returns the config object
  */
 
+// Schema.prototype.runNormalizers = function(config) {
+//   var len = this.fns.length;
+//   var idx = -1;
+//   while (++idx < len) {
+//     var field = this.fns[idx];
+//     var key = field.name;
+
+//     var fns = utils.arrayify(this.normalizers[key]);
+//     utils.union(fns, [field.normalize]);
+
+//     var val = config[key];
+//     for (var i = 0; i < fns.length; i++) {
+//       var fn = fns[i];
+//       var res = fn.call(this, val, key, config, this);
+//       if (this.isValidType(key, res, config)) {
+//         config[key] = res;
+//       }
+//     }
+//   }
+//   return config;
+// };
+
 Schema.prototype.runNormalizers = function(config) {
-  var len = this.fns.length;
-  var idx = -1;
-  while (++idx < len) {
-    var field = this.fns[idx];
-    var key = field.name;
+  var schema = this;
 
-    var fns = utils.arrayify(this.normalizers[key]);
-    utils.union(fns, [field.normalize]);
+  for (var key in config) {
+    if (config.hasOwnProperty(key)) {
+      var field = this.get(key);
+      var val = config[key];
 
-    var val = config[key];
-    for (var i = 0; i < fns.length; i++) {
-      var fn = fns[i];
-      var res = fn.call(this, val, key, config, this);
-      if (this.isValidType(key, res, config)) {
-        config[key] = res;
+      if (field && this.isValidType(key, val, config)) {
+        var fn = field.normalize;
+
+        if (typeof fn === 'function') {
+          var res = fn.call(schema, val, key, config, schema);
+          // the `normalize` fn can modify `val` in place, or return
+          if (field.isValidType(res)) {
+            config[key] = res;
+          }
+        }
       }
     }
   }
@@ -451,7 +472,7 @@ Schema.prototype.normalize = function(config, options) {
   }
 
   // set defaults and call normalizers
-  config = this.runNormalizers(config);
+  // config = this.runNormalizers(config);
   config = this.setDefaults(config);
 
   // check for missing required fields
@@ -488,27 +509,31 @@ Schema.prototype.normalizeField = function(key, value, config) {
   var val = config[key];
 
   if (utils.isObject(field)) {
-    if (typeof field.normalize === 'function' && !this.options.validate) {
+    var fn = field.normalize;
+
+    if (typeof fn === 'function' && !this.options.validate) {
       if (field.isSchema && field.errors.length) {
         utils.union(this.errors, field.errors);
       }
 
-      val = field.normalize.call(this, val, key, config, this);
-      if (typeof val !== 'undefined') {
+      val = fn.call(this, val, key, config, this);
+      if (field.isValidType(val)) {
         config[key] = val;
       }
+
       if (this.removeKey(key, config)) {
         return;
       }
     }
 
-    var isValidType = this.isValidType(key, val, config);
-    if (isValidType === false) {
+    if (this.isValidType(key, val, config) === false) {
       return;
     }
 
     if (typeof field.validate === 'function' && !this.options.normalize) {
-      if (!this.validateField(val, key, config)) return;
+      if (!this.validateField(val, key, config)) {
+        return;
+      }
     }
   } else {
     this.isValidType(key, val, config);
