@@ -53,6 +53,11 @@ function Schema(options) {
   this.addFields(this.options);
 }
 
+Schema.prototype.set = function(key, value) {
+  utils.set(this, key, value);
+  return this;
+};
+
 /**
  * Push an error onto the `schema.errors` array. Placeholder for
  * better error handling and a reporter (planned).
@@ -71,16 +76,6 @@ Schema.prototype.error = function(method, prop, msg, value) {
     err.value = value;
   }
   this.errors.push(err);
-  return this;
-};
-
-Schema.prototype.normalizer = function(name, fn) {
-  utils.unionValue(this.normalizers, name, fn);
-  return this;
-};
-
-Schema.prototype.validator = function(name, fn) {
-  utils.unionValue(this.validators, name, fn);
   return this;
 };
 
@@ -189,9 +184,11 @@ Schema.prototype.update = function(key, val, config) {
     config = val;
     val = config[key];
   }
+
   if (typeof val !== 'undefined' && config) {
     config[key] = val;
   }
+
   this.normalizeField(key, val, config);
   return this;
 };
@@ -218,59 +215,6 @@ Schema.prototype.isOptional = function(name) {
 
 Schema.prototype.isRequired = function(name) {
   return !!this.get(name, 'required');
-};
-
-/**
- * Run all normalizer functions against the config object.
- *
- * @param {Object} `config`
- * @return {Object} returns the config object
- */
-
-// Schema.prototype.runNormalizers = function(config) {
-//   var len = this.fns.length;
-//   var idx = -1;
-//   while (++idx < len) {
-//     var field = this.fns[idx];
-//     var key = field.name;
-
-//     var fns = utils.arrayify(this.normalizers[key]);
-//     utils.union(fns, [field.normalize]);
-
-//     var val = config[key];
-//     for (var i = 0; i < fns.length; i++) {
-//       var fn = fns[i];
-//       var res = fn.call(this, val, key, config, this);
-//       if (this.isValidType(key, res, config)) {
-//         config[key] = res;
-//       }
-//     }
-//   }
-//   return config;
-// };
-
-Schema.prototype.runNormalizers = function(config) {
-  var schema = this;
-
-  for (var key in config) {
-    if (config.hasOwnProperty(key)) {
-      var field = this.get(key);
-      var val = config[key];
-
-      if (field && this.isValidType(key, val, config)) {
-        var fn = field.normalize;
-
-        if (typeof fn === 'function') {
-          var res = fn.call(schema, val, key, config, schema);
-          // the `normalize` fn can modify `val` in place, or return
-          if (field.isValidType(res)) {
-            config[key] = res;
-          }
-        }
-      }
-    }
-  }
-  return config;
 };
 
 /**
@@ -338,8 +282,10 @@ Schema.prototype.missingFields = function(config) {
  * @api public
  */
 
-Schema.prototype.sortObject = function(config, keys) {
-  keys = keys || this.options.keys;
+Schema.prototype.sortObject = function(config, options) {
+  var opts = utils.merge({}, this.options, options);
+  var keys = opts.keys;
+
   if (Array.isArray(keys) && keys.length) {
     keys = utils.union(keys, Object.keys(config));
     var len = keys.length, i = -1;
@@ -472,18 +418,18 @@ Schema.prototype.normalize = function(config, options) {
   }
 
   // set defaults and call normalizers
-  // config = this.runNormalizers(config);
   config = this.setDefaults(config);
 
   // check for missing required fields
   this.missingFields(config);
 
   // sort object and arrays
-  config = this.sortObject(config);
+  config = this.sortObject(config, options);
   config = this.sortArrays(config);
 
+  var opts = utils.merge({}, this.options, options);
   // remove empty objects if specified on options
-  if (this.options.omitEmpty) {
+  if (opts.omitEmpty === true) {
     config = utils.omitEmpty(config);
   }
   return config;

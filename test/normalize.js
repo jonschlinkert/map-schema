@@ -121,6 +121,14 @@ describe('schema.normalize()', function() {
     });
   });
 
+  describe('omitEmpty', function() {
+    it('should omit empty fields from a config', function() {
+      var config = schema.normalize({a: 'b', c: {}}, {omitEmpty: true});
+      assert.equal(config.a, 'b');
+      assert.equal(typeof config.c, 'undefined');
+    });
+  });
+
   describe('isValidType', function() {
     it('should validate the type of a field', function() {
       schema.field('foo', 'array');
