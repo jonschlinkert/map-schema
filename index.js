@@ -1,5 +1,5 @@
 /*!
- * schema <https://github.com/jonschlinkert/schema>
+ * map-schema <https://github.com/jonschlinkert/map-schema>
  *
  * Copyright (c) 2016, Jon Schlinkert.
  * Licensed under the MIT License.
@@ -7,6 +7,7 @@
 
 'use strict';
 
+var Emitter = require('component-emitter');
 var Data = require('./lib/data');
 var Field = require('./lib/field');
 var utils = require('./lib/utils');
@@ -53,6 +54,8 @@ function Schema(options) {
   this.addFields(this.options);
 }
 
+Emitter(Schema.prototype);
+
 Schema.prototype.set = function(key, value) {
   utils.set(this, key, value);
   return this;
@@ -76,6 +79,7 @@ Schema.prototype.error = function(method, prop, msg, value) {
     err.value = value;
   }
   this.errors.push(err);
+  this.emit('error', method, prop, err);
   return this;
 };
 
@@ -415,6 +419,17 @@ Schema.prototype.normalize = function(config, options) {
 
   for (var key in config) {
     this.normalizeField.call(this, key, config[key], config);
+  }
+
+  var required = this.required;
+  var len = required.length;
+  var idx = -1;
+
+  while (++idx < len) {
+    var ele = required[idx];
+    if (!config.hasOwnProperty(ele)) {
+      this.normalizeField.call(this, ele, config[ele], config);
+    }
   }
 
   // set defaults and call normalizers
