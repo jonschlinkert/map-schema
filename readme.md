@@ -7,7 +7,7 @@
 Install with [npm](https://www.npmjs.com/):
 
 ```sh
-$ npm i map-schema --save
+$ npm install map-schema --save
 ```
 
 ## Usage
@@ -59,7 +59,7 @@ Validation errors are exposed on `schema.errors`. Error reporting is pretty basi
 
 ## API
 
-### [Schema](index.js#L40)
+### [Schema](index.js#L42)
 
 Create a new `Schema` with the given `options`.
 
@@ -82,7 +82,16 @@ var schema = new Schema()
   .normalize(require('./package'))
 ```
 
-### [.error](index.js#L76)
+### [.set](index.js#L69)
+
+Set `key` on the instance with the given `value`.
+
+**Params**
+
+* `key` **{String}**
+* `value` **{Object}**
+
+### [.error](index.js#L86)
 
 Push an error onto the `schema.errors` array. Placeholder for
 better error handling and a reporter (planned).
@@ -95,7 +104,7 @@ better error handling and a reporter (planned).
 * `value` **{String}**: The value associated with the error.
 * `returns` **{any}**
 
-### [.field](index.js#L108)
+### [.field](index.js#L118)
 
 Add a field to the schema with the given `name`, `type` or types, and options.
 
@@ -120,7 +129,7 @@ schema
   })
 ```
 
-### [.get](index.js#L158)
+### [.get](index.js#L170)
 
 Get field `name` from the schema. Get a specific property from the field by passing the property name as a second argument.
 
@@ -138,7 +147,7 @@ var field = schema.get('bugs', 'types');
 //=> ['object', 'string']
 ```
 
-### [.omit](index.js#L171)
+### [.omit](index.js#L183)
 
 Omit a property from the returned object. This method can be used
 in normalize functions as a way of removing undesired properties.
@@ -148,7 +157,7 @@ in normalize functions as a way of removing undesired properties.
 * `key` **{String}**: The property to remove
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.update](index.js#L186)
+### [.update](index.js#L198)
 
 Update a property on the returned object. This method will trigger validation
 and normalization of the updated property.
@@ -159,7 +168,7 @@ and normalization of the updated property.
 * `val` **{any}**: Value of the property to update.
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.isOptional](index.js#L208)
+### [.isOptional](index.js#L222)
 
 Returns true if field `name` is an optional field.
 
@@ -168,7 +177,7 @@ Returns true if field `name` is an optional field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.isRequired](index.js#L220)
+### [.isRequired](index.js#L234)
 
 Returns true if field `name` was defined as a required field.
 
@@ -177,7 +186,7 @@ Returns true if field `name` was defined as a required field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.missingFields](index.js#L258)
+### [.missingFields](index.js#L272)
 
 Checks the config object for missing fields and. If found,
 an error message is pushed onto the `schema.errors` array,
@@ -188,7 +197,7 @@ which can be used for reporting.
 * `config` **{Object}**
 * `returns` **{Array}**
 
-### [.sortObject](index.js#L289)
+### [.sortObject](index.js#L303)
 
 If a `keys` array is passed on the constructor options, or as a second argument to `sortObject`, this sorts the given object so that keys are in the same order as the supplied array of `keys`.
 
@@ -204,7 +213,7 @@ schema.sortObject({z: '', a: ''}, ['a', 'z']);
 //=> {a: '', z: ''}
 ```
 
-### [.sortArrays](index.js#L318)
+### [.sortArrays](index.js#L332)
 
 When `options.sortArrays` _is not false_, sorts all arrays in the
 given `config` object using JavaScript's native `.localeCompare`
@@ -215,7 +224,7 @@ method.
 * `config` **{Object}**
 * `returns` **{Object}**: returns the config object with sorted arrays
 
-### [.isValidType](index.js#L335)
+### [.isValidType](index.js#L349)
 
 Returns true if the given value is valid for field `key`.
 
@@ -226,7 +235,7 @@ Returns true if the given value is valid for field `key`.
 * `config` **{Object}**
 * `returns` **{Boolean}**
 
-### [.normalize](index.js#L412)
+### [.normalize](index.js#L426)
 
 Normalize the given `config` object.
 
@@ -237,7 +246,7 @@ Normalize the given `config` object.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.normalizeField](index.js#L463)
+### [.normalizeField](index.js#L479)
 
 Normalize a field on the schema.
 
@@ -248,7 +257,7 @@ Normalize a field on the schema.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.visit](index.js#L515)
+### [.visit](index.js#L533)
 
 Visit `method` over the given object or array.
 
@@ -308,12 +317,16 @@ field.validate('name', {});
 
 [normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json to improve compatibility, programmatic readability and usefulness with third party libs. | [homepage](https://github.com/jonschlinkert/normalize-pkg/)
 
-## Generate docs
+## Contributing
+
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/jonschlinkert/map-schema/issues/new).
+
+## Building docs
 
 Generate readme and API documentation with [verb][]:
 
 ```sh
-$ npm i -d && npm run docs
+$ npm install verb && npm run docs
 ```
 
 Or, if [verb][] is installed globally:
@@ -327,12 +340,8 @@ $ verb
 Install dev dependencies:
 
 ```sh
-$ npm i -d && npm test
+$ npm install -d && npm test
 ```
-
-## Contributing
-
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/jonschlinkert/map-schema/issues/new).
 
 ## Author
 
@@ -348,4 +357,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/map-schema/blo
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on February 17, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 05, 2016._
