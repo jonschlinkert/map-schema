@@ -7,7 +7,9 @@
 
 'use strict';
 
+var util = require('util');
 var Emitter = require('component-emitter');
+var debug = require('debug')('map-schema');
 var Data = require('./lib/data');
 var Field = require('./lib/field');
 var utils = require('./lib/utils');
@@ -55,6 +57,14 @@ function Schema(options) {
 }
 
 Emitter(Schema.prototype);
+
+/**
+ * Set `key` on the instance with the given `value`.
+ *
+ * @param {String} `key`
+ * @param {Object} `value`
+ * @api public
+ */
 
 Schema.prototype.set = function(key, value) {
   utils.set(this, key, value);
@@ -106,6 +116,8 @@ Schema.prototype.error = function(method, prop, msg, value) {
  */
 
 Schema.prototype.field = function(name, type, options) {
+  debug('adding field "%s"', name);
+
   var field = new Field(type, options || {});
   field.name = name;
 
@@ -184,6 +196,8 @@ Schema.prototype.omit = function(key) {
  */
 
 Schema.prototype.update = function(key, val, config) {
+  debug('updating field "%s"', key);
+
   if (arguments.length === 2) {
     config = val;
     val = config[key];
@@ -410,6 +424,8 @@ Schema.prototype.validateField = function(val, key, config) {
  */
 
 Schema.prototype.normalize = function(config, options) {
+  debug('normalizing config');
+
   if (utils.typeOf(config) !== 'object') {
     throw new TypeError('expected config to be an object');
   }
@@ -461,6 +477,8 @@ Schema.prototype.normalize = function(config, options) {
  */
 
 Schema.prototype.normalizeField = function(key, value, config) {
+  debug('normalizing field "%s", "%j"', key, util.inspect(value));
+
   if (!this.fields.hasOwnProperty(key)) {
     this.removeKey(key, config);
     return;
