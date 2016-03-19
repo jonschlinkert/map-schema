@@ -197,6 +197,22 @@ Schema.prototype.omit = function(key) {
 };
 
 /**
+ * Remove `key` from the `config` object.
+ *
+ * @param {String} key
+ * @param {Object} config
+ * @return {undefined} The object is modified in place
+ */
+
+Schema.prototype.removeKey = function(key, config) {
+  if (this.remove.indexOf(key) !== -1) {
+    delete this.defaults[key];
+    delete config[key];
+    return true;
+  }
+};
+
+/**
  * Update a property on the returned object. This method will trigger validation
  * and normalization of the updated property.
  *
@@ -482,9 +498,8 @@ Schema.prototype.normalize = function(config, options) {
     config = utils.omitEmpty(config);
   }
 
-  if (opts.omit.length) {
-    config = utils.omit(config, opts.omit);
-  }
+  var omit = utils.union([], this.remove, opts.omit);
+  config = utils.omit(config, omit);
 
   this.logWarnings(config);
   return config;
@@ -558,22 +573,6 @@ Schema.prototype.normalizeField = function(key, value, config) {
 Schema.prototype.visit = function(method, value) {
   utils.visit(this, method, value);
   return this;
-};
-
-/**
- * Remove `key` from the `config` object.
- *
- * @param {String} key
- * @param {Object} config
- * @return {undefined} The object is modified in place
- */
-
-Schema.prototype.removeKey = function(key, config) {
-  if (this.remove.indexOf(key) !== -1) {
-    delete this.defaults[key];
-    delete config[key];
-    return true;
-  }
 };
 
 /**
