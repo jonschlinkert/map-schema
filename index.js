@@ -30,7 +30,7 @@ module.exports = Schema;
  *   .field('license', 'string')
  *   .field('licenses', {
  *     validate: function(val, key) {
- *       this.error(key, 'licenses is deprecated. use "license" instead.');
+ *       this.warning(key, 'licenses is deprecated. use "license" instead.');
  *     }
  *   })
  *   .normalize(require('./package'))
@@ -40,23 +40,34 @@ module.exports = Schema;
  */
 
 function Schema(options) {
-  this.isSchema = true;
   this.options = options || {};
   this.data = new Data();
+  this.isSchema = true;
+  this.utils = utils;
+  this.initSchema();
+  this.addFields(this.options);
+}
 
-  this.fns = [];
+/**
+ * Inherit Emitter
+ */
+
+Emitter(Schema.prototype);
+
+/**
+ * Initalize Schema instance properties
+ */
+
+Schema.prototype.initSchema = function() {
   this.normalizers = {};
   this.validators = {};
   this.defaults = {};
   this.required = [];
+  this.warnings = [];
   this.fields = {};
   this.remove = [];
-  this.errors = [];
-
-  this.addFields(this.options);
-}
-
-Emitter(Schema.prototype);
+  this.fns = [];
+};
 
 /**
  * Set `key` on the instance with the given `value`.
@@ -72,24 +83,24 @@ Schema.prototype.set = function(key, value) {
 };
 
 /**
- * Push an error onto the `schema.errors` array. Placeholder for
- * better error handling and a reporter (planned).
+ * Push a warning onto the `schema.warnings` array. Placeholder for
+ * better message handling and a reporter (planned).
  *
- * @param {String} `method` The name of the method where the error is recorded.
- * @param {String} `prop` The name of the field for which the error is being created.
- * @param {String} `message` The error message.
- * @param {String} `value` The value associated with the error.
+ * @param {String} `method` The name of the method where the warning is recorded.
+ * @param {String} `prop` The name of the field for which the warning is being created.
+ * @param {String} `message` The warning message.
+ * @param {String} `value` The value associated with the warning.
  * @return {any}
  * @api public
  */
 
-Schema.prototype.error = function(method, prop, msg, value) {
-  var err = { method: method, prop: prop, message: msg, args: value };
+Schema.prototype.warning = function(method, prop, msg, value) {
+  var warning = { method: method, prop: prop, message: msg, args: value };
   if (typeof value !== 'undefined') {
-    err.value = value;
+    warning.value = value;
   }
-  this.errors.push(err);
-  this.emit('error', method, prop, err);
+  this.warnings.push(warning);
+  this.emit('warning', method, prop, warning);
   return this;
 };
 
@@ -261,7 +272,7 @@ Schema.prototype.setDefaults = function(config) {
 
 /**
  * Checks the config object for missing fields and. If found,
- * an error message is pushed onto the `schema.errors` array,
+ * a warning message is pushed onto the `schema.warnings` array,
  * which can be used for reporting.
  *
  * @param {Object} `config`
@@ -278,7 +289,7 @@ Schema.prototype.missingFields = function(config) {
   while (++i < len) {
     var prop = this.required[i];
     if (!config.hasOwnProperty(prop)) {
-      this.error('missingFields', prop, 'required field');
+      this.warning('missing', prop);
       res.push(prop);
     }
   }
@@ -346,12 +357,22 @@ Schema.prototype.sortArrays = function(config) {
  * @api public
  */
 
+Schema.prototype.isValidField = function(key) {
+  var field = this.get(key);
+  if (typeof field === 'undefined') {
+    return this.options.knownOnly !== true;
+  }
+  return field.isValidType(this.config[key], key, this.config, this);
+};
+
 Schema.prototype.isValidType = function(key, val, config) {
   config = config || {};
+  this.config = config;
+
   var field = this.get(key);
   if (typeof field === 'undefined') {
     if (this.options.knownOnly) {
-      this.error('isValidType', key, 'unknown field');
+      this.warning('invalidField', key);
       return false;
     }
     return true;
@@ -362,10 +383,11 @@ Schema.prototype.isValidType = function(key, val, config) {
   }
 
   if (config.hasOwnProperty(key) || typeof field.normalize === 'function') {
-    var types = this.get(key, 'types');
-    var args = JSON.stringify(val);
-    var msg = 'expected "' + key + '" to be ' + utils.article(types);
-    this.error('isValidType', key, msg, args);
+    if (this.isRequired(key) || typeof val !== 'undefined') {
+      var types = this.get(key, 'types');
+      var warning = {expected: types, actual: val};
+      this.warning('invalidType', key, warning);
+    }
   }
   return false;
 };
@@ -385,7 +407,7 @@ Schema.prototype.validate = function(config) {
   for (var key in config) {
     this.validateField(config[key], key, config);
   }
-  return this.errors;
+  return this.warnings;
 };
 
 /**
@@ -399,8 +421,9 @@ Schema.prototype.validate = function(config) {
 
 Schema.prototype.validateField = function(val, key, config) {
   var field = this.fields[key];
-  if (!utils.isObject(field)) {
-    this.error('validateField', key, 'field is not defined');
+
+  if (!utils.isObject(field) && this.options.knownOnly === true) {
+    this.warning('invalidField', key);
   }
 
   this.isValidType(key, val, config);
@@ -408,8 +431,9 @@ Schema.prototype.validateField = function(val, key, config) {
   if (typeof field.validate === 'function') {
     var isValid = field.validate(val, key, config, this);
     if (!isValid) {
-      this.error('validateField', key, 'invalid value', val);
+      this.warning('invalidValue', key, {actual: val});
     }
+    return isValid;
   }
 };
 
@@ -432,24 +456,16 @@ Schema.prototype.normalize = function(config, options) {
 
   options = options || {};
   this.addFields(options);
-
-  for (var key in config) {
-    this.normalizeField.call(this, key, config[key], config);
-  }
-
-  var required = this.required;
-  var len = required.length;
-  var idx = -1;
-
-  while (++idx < len) {
-    var ele = required[idx];
-    if (!config.hasOwnProperty(ele)) {
-      this.normalizeField.call(this, ele, config[ele], config);
-    }
-  }
+  this.config = config;
 
   // set defaults and call normalizers
   config = this.setDefaults(config);
+
+  for (var key in this.fields) {
+    if (this.fields.hasOwnProperty(key)) {
+      this.normalizeField.call(this, key, config[key], config);
+    }
+  }
 
   // check for missing required fields
   this.missingFields(config);
@@ -459,10 +475,18 @@ Schema.prototype.normalize = function(config, options) {
   config = this.sortArrays(config);
 
   var opts = utils.merge({}, this.options, options);
+  opts.omit = utils.arrayify(opts.omit);
+
   // remove empty objects if specified on options
   if (opts.omitEmpty === true) {
     config = utils.omitEmpty(config);
   }
+
+  if (opts.omit.length) {
+    config = utils.omit(config, opts.omit);
+  }
+
+  this.logWarnings(config);
   return config;
 };
 
@@ -488,11 +512,12 @@ Schema.prototype.normalizeField = function(key, value, config) {
   var val = config[key];
 
   if (utils.isObject(field)) {
+    field.isNormalized = true;
     var fn = field.normalize;
 
     if (typeof fn === 'function' && !this.options.validate) {
-      if (field.isSchema && field.errors.length) {
-        utils.union(this.errors, field.errors);
+      if (field.isSchema && field.warnings.length) {
+        utils.union(this.warnings, field.warnings);
       }
 
       val = fn.call(this, val, key, config, this);
@@ -552,17 +577,37 @@ Schema.prototype.removeKey = function(key, config) {
 };
 
 /**
- * Log warnings and errors that were recorded during normalization.
+ * Log warnings and warnings that were recorded during normalization.
  *
  * This is a placeholder for a reporter (planned)
  *
  * @return {String}
  */
 
-Schema.prototype.logErrors = function() {
-  var msg = 'Field\t| Message';
-  this.errors.forEach(function(err) {
-    msg += '\n' + err.field + '\t| ' + err.msg;
-  });
+Schema.prototype.logWarnings = function() {
+  var omit = utils.arrayify(this.options.omit);
+  var len = this.warnings.length;
+  var idx = -1;
+
+  if (this.options.verbose !== true || len === 0) {
+    return;
+  }
+
+  var max = utils.longest(Object.keys(this.fields)).length;
+  var msg = '\n';
+
+  // warnings body
+  while (++idx < len) {
+    if (idx > 0) {
+      msg += '\n';
+    }
+    var warning = this.warnings[idx];
+    if (omit.indexOf(warning.prop) !== -1) {
+      continue;
+    }
+    msg += utils.formatWarning(warning, max);
+  }
+
+  // log out warnings
   console.log(msg);
 };
