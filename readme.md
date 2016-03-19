@@ -76,13 +76,13 @@ var schema = new Schema()
   .field('license', 'string')
   .field('licenses', {
     validate: function(val, key) {
-      this.error(key, 'licenses is deprecated. use "license" instead.');
+      this.warning(key, 'licenses is deprecated. use "license" instead.');
     }
   })
   .normalize(require('./package'))
 ```
 
-### [.set](index.js#L69)
+### [.set](index.js#L80)
 
 Set `key` on the instance with the given `value`.
 
@@ -91,20 +91,20 @@ Set `key` on the instance with the given `value`.
 * `key` **{String}**
 * `value` **{Object}**
 
-### [.error](index.js#L86)
+### [.warning](index.js#L97)
 
-Push an error onto the `schema.errors` array. Placeholder for
-better error handling and a reporter (planned).
+Push a warning onto the `schema.warnings` array. Placeholder for
+better message handling and a reporter (planned).
 
 **Params**
 
-* `method` **{String}**: The name of the method where the error is recorded.
-* `prop` **{String}**: The name of the field for which the error is being created.
-* `message` **{String}**: The error message.
-* `value` **{String}**: The value associated with the error.
+* `method` **{String}**: The name of the method where the warning is recorded.
+* `prop` **{String}**: The name of the field for which the warning is being created.
+* `message` **{String}**: The warning message.
+* `value` **{String}**: The value associated with the warning.
 * `returns` **{any}**
 
-### [.field](index.js#L118)
+### [.field](index.js#L129)
 
 Add a field to the schema with the given `name`, `type` or types, and options.
 
@@ -129,7 +129,7 @@ schema
   })
 ```
 
-### [.get](index.js#L170)
+### [.get](index.js#L181)
 
 Get field `name` from the schema. Get a specific property from the field by passing the property name as a second argument.
 
@@ -147,7 +147,7 @@ var field = schema.get('bugs', 'types');
 //=> ['object', 'string']
 ```
 
-### [.omit](index.js#L183)
+### [.omit](index.js#L194)
 
 Omit a property from the returned object. This method can be used
 in normalize functions as a way of removing undesired properties.
@@ -157,7 +157,7 @@ in normalize functions as a way of removing undesired properties.
 * `key` **{String}**: The property to remove
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.update](index.js#L198)
+### [.update](index.js#L225)
 
 Update a property on the returned object. This method will trigger validation
 and normalization of the updated property.
@@ -168,7 +168,7 @@ and normalization of the updated property.
 * `val` **{any}**: Value of the property to update.
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.isOptional](index.js#L222)
+### [.isOptional](index.js#L249)
 
 Returns true if field `name` is an optional field.
 
@@ -177,7 +177,7 @@ Returns true if field `name` is an optional field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.isRequired](index.js#L234)
+### [.isRequired](index.js#L261)
 
 Returns true if field `name` was defined as a required field.
 
@@ -186,10 +186,10 @@ Returns true if field `name` was defined as a required field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.missingFields](index.js#L272)
+### [.missingFields](index.js#L299)
 
 Checks the config object for missing fields and. If found,
-an error message is pushed onto the `schema.errors` array,
+a warning message is pushed onto the `schema.warnings` array,
 which can be used for reporting.
 
 **Params**
@@ -197,7 +197,7 @@ which can be used for reporting.
 * `config` **{Object}**
 * `returns` **{Array}**
 
-### [.sortObject](index.js#L303)
+### [.sortObject](index.js#L330)
 
 If a `keys` array is passed on the constructor options, or as a second argument to `sortObject`, this sorts the given object so that keys are in the same order as the supplied array of `keys`.
 
@@ -213,7 +213,7 @@ schema.sortObject({z: '', a: ''}, ['a', 'z']);
 //=> {a: '', z: ''}
 ```
 
-### [.sortArrays](index.js#L332)
+### [.sortArrays](index.js#L359)
 
 When `options.sortArrays` _is not false_, sorts all arrays in the
 given `config` object using JavaScript's native `.localeCompare`
@@ -224,7 +224,7 @@ method.
 * `config` **{Object}**
 * `returns` **{Object}**: returns the config object with sorted arrays
 
-### [.isValidType](index.js#L349)
+### [.isValidField](index.js#L376)
 
 Returns true if the given value is valid for field `key`.
 
@@ -235,7 +235,7 @@ Returns true if the given value is valid for field `key`.
 * `config` **{Object}**
 * `returns` **{Boolean}**
 
-### [.normalize](index.js#L426)
+### [.normalize](index.js#L466)
 
 Normalize the given `config` object.
 
@@ -246,7 +246,7 @@ Normalize the given `config` object.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.normalizeField](index.js#L479)
+### [.normalizeField](index.js#L518)
 
 Normalize a field on the schema.
 
@@ -257,7 +257,7 @@ Normalize a field on the schema.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.visit](index.js#L533)
+### [.visit](index.js#L573)
 
 Visit `method` over the given object or array.
 
@@ -315,7 +315,7 @@ field.validate('name', {});
 
 ## Related projects
 
-[normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json to improve compatibility, programmatic readability and usefulness with third party libs. | [homepage](https://github.com/jonschlinkert/normalize-pkg/)
+[normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json. | [homepage](https://github.com/jonschlinkert/normalize-pkg/)
 
 ## Contributing
 
@@ -357,4 +357,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/map-schema/blo
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 05, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 19, 2016._
