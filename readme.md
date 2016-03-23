@@ -1,6 +1,8 @@
-# map-schema [![NPM version](https://img.shields.io/npm/v/map-schema.svg)](https://www.npmjs.com/package/map-schema) [![Build Status](https://img.shields.io/travis/jonschlinkert/map-schema.svg)](https://travis-ci.org/jonschlinkert/map-schema)
+# map-schema [![NPM version](https://img.shields.io/npm/v/map-schema.svg?style=flat)](https://www.npmjs.com/package/map-schema) [![NPM downloads](https://img.shields.io/npm/dm/map-schema.svg?style=flat)](https://npmjs.org/package/map-schema) [![Build Status](https://img.shields.io/travis/jonschlinkert/map-schema.svg?style=flat)](https://travis-ci.org/jonschlinkert/map-schema)
 
 > Normalize an object by running normalizers and validators that are mapped to a schema.
+
+You might also be interested in [normalize-pkg](https://github.com/jonschlinkert/normalize-pkg/).
 
 ## Install
 
@@ -82,7 +84,7 @@ var schema = new Schema()
   .normalize(require('./package'))
 ```
 
-### [.set](index.js#L80)
+### [.set](index.js#L81)
 
 Set `key` on the instance with the given `value`.
 
@@ -91,7 +93,7 @@ Set `key` on the instance with the given `value`.
 * `key` **{String}**
 * `value` **{Object}**
 
-### [.warning](index.js#L97)
+### [.warning](index.js#L98)
 
 Push a warning onto the `schema.warnings` array. Placeholder for
 better message handling and a reporter (planned).
@@ -104,7 +106,7 @@ better message handling and a reporter (planned).
 * `value` **{String}**: The value associated with the warning.
 * `returns` **{any}**
 
-### [.field](index.js#L129)
+### [.field](index.js#L130)
 
 Add a field to the schema with the given `name`, `type` or types, and options.
 
@@ -129,7 +131,7 @@ schema
   })
 ```
 
-### [.get](index.js#L181)
+### [.get](index.js#L186)
 
 Get field `name` from the schema. Get a specific property from the field by passing the property name as a second argument.
 
@@ -147,7 +149,7 @@ var field = schema.get('bugs', 'types');
 //=> ['object', 'string']
 ```
 
-### [.omit](index.js#L194)
+### [.omit](index.js#L199)
 
 Omit a property from the returned object. This method can be used
 in normalize functions as a way of removing undesired properties.
@@ -157,7 +159,7 @@ in normalize functions as a way of removing undesired properties.
 * `key` **{String}**: The property to remove
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.update](index.js#L225)
+### [.update](index.js#L230)
 
 Update a property on the returned object. This method will trigger validation
 and normalization of the updated property.
@@ -168,7 +170,7 @@ and normalization of the updated property.
 * `val` **{any}**: Value of the property to update.
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.isOptional](index.js#L249)
+### [.isOptional](index.js#L254)
 
 Returns true if field `name` is an optional field.
 
@@ -177,7 +179,7 @@ Returns true if field `name` is an optional field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.isRequired](index.js#L261)
+### [.isRequired](index.js#L266)
 
 Returns true if field `name` was defined as a required field.
 
@@ -186,7 +188,7 @@ Returns true if field `name` was defined as a required field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.missingFields](index.js#L299)
+### [.missingFields](index.js#L304)
 
 Checks the config object for missing fields and. If found,
 a warning message is pushed onto the `schema.warnings` array,
@@ -197,7 +199,7 @@ which can be used for reporting.
 * `config` **{Object}**
 * `returns` **{Array}**
 
-### [.sortObject](index.js#L330)
+### [.sortObject](index.js#L335)
 
 If a `keys` array is passed on the constructor options, or as a second argument to `sortObject`, this sorts the given object so that keys are in the same order as the supplied array of `keys`.
 
@@ -213,7 +215,7 @@ schema.sortObject({z: '', a: ''}, ['a', 'z']);
 //=> {a: '', z: ''}
 ```
 
-### [.sortArrays](index.js#L359)
+### [.sortArrays](index.js#L364)
 
 When `options.sortArrays` _is not false_, sorts all arrays in the
 given `config` object using JavaScript's native `.localeCompare`
@@ -224,7 +226,7 @@ method.
 * `config` **{Object}**
 * `returns` **{Object}**: returns the config object with sorted arrays
 
-### [.isValidField](index.js#L376)
+### [.isValidField](index.js#L381)
 
 Returns true if the given value is valid for field `key`.
 
@@ -235,7 +237,7 @@ Returns true if the given value is valid for field `key`.
 * `config` **{Object}**
 * `returns` **{Boolean}**
 
-### [.normalize](index.js#L466)
+### [.normalize](index.js#L471)
 
 Normalize the given `config` object.
 
@@ -246,7 +248,7 @@ Normalize the given `config` object.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.normalizeField](index.js#L518)
+### [.normalizeField](index.js#L531)
 
 Normalize a field on the schema.
 
@@ -257,7 +259,7 @@ Normalize a field on the schema.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.visit](index.js#L573)
+### [.visit](index.js#L586)
 
 Visit `method` over the given object or array.
 
@@ -315,7 +317,13 @@ field.validate('name', {});
 
 ## Related projects
 
-[normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json. | [homepage](https://github.com/jonschlinkert/normalize-pkg/)
+You might also be interested in these projects:
+
+* [get-value](https://www.npmjs.com/package/get-value): Use property paths (`  a.b.c`) to get a nested value from an object. | [homepage](https://github.com/jonschlinkert/get-value)
+* [normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json. | [homepage](https://github.com/jonschlinkert/normalize-pkg/)
+* [object.omit](https://www.npmjs.com/package/object.omit): Return a copy of an object excluding the given key, or array of keys. Also… [more](https://www.npmjs.com/package/object.omit) | [homepage](https://github.com/jonschlinkert/object.omit)
+* [object.pick](https://www.npmjs.com/package/object.pick): Returns a filtered copy of an object with only the specified keys, similar to `  _.pick`… [more](https://www.npmjs.com/package/object.pick) | [homepage](https://github.com/jonschlinkert/object.pick)
+* [set-value](https://www.npmjs.com/package/set-value): Create nested values and any intermediaries using dot notation (`'a.b.c'`) paths. | [homepage](https://github.com/jonschlinkert/set-value)
 
 ## Contributing
 
@@ -323,13 +331,13 @@ Pull requests and stars are always welcome. For bugs and feature requests, [plea
 
 ## Building docs
 
-Generate readme and API documentation with [verb][]:
+Generate readme and API documentation with [verb](https://github.com/verbose/verb):
 
 ```sh
 $ npm install verb && npm run docs
 ```
 
-Or, if [verb][] is installed globally:
+Or, if [verb](https://github.com/verbose/verb) is installed globally:
 
 ```sh
 $ verb
@@ -352,9 +360,9 @@ $ npm install -d && npm test
 
 ## License
 
-Copyright © 2016 [Jon Schlinkert](https://github.com/jonschlinkert)
+Copyright © 2016, [Jon Schlinkert](https://github.com/jonschlinkert).
 Released under the [MIT license](https://github.com/jonschlinkert/map-schema/blob/master/LICENSE).
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 19, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v0.9.0, on March 23, 2016._

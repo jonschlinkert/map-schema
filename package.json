@@ -54,6 +54,7 @@
     "schema"
   ],
   "verb": {
+    "run": true,
     "toc": false,
     "layout": "default",
     "tasks": [
@@ -63,13 +64,22 @@
       "gulp-format-md"
     ],
     "related": {
+      "highlight": "normalize-pkg",
       "list": [
+        "get-value",
+        "set-value",
+        "object.omit",
+        "object.pick",
         "normalize-pkg"
       ]
     },
     "reflinks": [
       "normalize-pkg",
-      "isobject"
-    ]
+      "isobject",
+      "verb"
+    ],
+    "lint": {
+      "reflinks": true
+    }
   }
 }
