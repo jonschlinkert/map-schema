@@ -61,6 +61,15 @@ describe('schema.normalize()', function() {
     });
   });
 
+  describe('only', function() {
+    it('should only include the specified fields', function() {
+      var actual = schema.normalize({a: 'a', b: 'b', c: 'c'}, {only: ['a', 'c']});
+      assert(actual.hasOwnProperty('a'));
+      assert(actual.hasOwnProperty('c'));
+      assert(!actual.hasOwnProperty('b'));
+    });
+  });
+
   describe('isOptional', function() {
     it('should return true if a field was defined as isOptional', function() {
       schema.field('keywords', 'array', {

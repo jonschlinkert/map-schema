@@ -46,6 +46,7 @@ function Schema(options) {
   this.utils = utils;
   this.initSchema();
   this.addFields(this.options);
+  this.options.only = utils.arrayify(this.options.pick || this.options.only);
 }
 
 /**
@@ -127,8 +128,12 @@ Schema.prototype.warning = function(method, prop, msg, value) {
  */
 
 Schema.prototype.field = function(name, type, options) {
-  debug('adding field "%s"', name);
+  var pick = utils.arrayify(this.options.pick || this.options.only);
+  if (pick && pick.length && !utils.hasElement(name, pick)) {
+    return this;
+  }
 
+  debug('adding field "%s"', name);
   var field = new Field(type, options || {});
   field.name = name;
 
@@ -476,6 +481,12 @@ Schema.prototype.normalize = function(config, options) {
 
   // set defaults and call normalizers
   config = this.setDefaults(config);
+  var opts = utils.merge({}, this.options, options);
+
+  var pick = utils.arrayify(opts.only || opts.pick);
+  if (pick.length) {
+    this.fields = utils.pick(this.fields, pick);
+  }
 
   for (var key in this.fields) {
     if (this.fields.hasOwnProperty(key)) {
@@ -487,15 +498,17 @@ Schema.prototype.normalize = function(config, options) {
   this.missingFields(config);
 
   // sort object and arrays
-  config = this.sortObject(config, options);
+  config = this.sortObject(config, opts);
   config = this.sortArrays(config);
-
-  var opts = utils.merge({}, this.options, options);
   opts.omit = utils.arrayify(opts.omit);
 
   // remove empty objects if specified on options
   if (opts.omitEmpty === true) {
     config = utils.omitEmpty(config);
+  }
+
+  if (pick.length) {
+    config = utils.pick(config, pick);
   }
 
   var omit = utils.union([], this.remove, opts.omit);
