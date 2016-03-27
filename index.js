@@ -497,9 +497,6 @@ Schema.prototype.normalize = function(config, options) {
   // check for missing required fields
   this.missingFields(config);
 
-  // sort object and arrays
-  config = this.sortObject(config, opts);
-  config = this.sortArrays(config);
   opts.omit = utils.arrayify(opts.omit);
 
   // remove empty objects if specified on options
@@ -513,6 +510,10 @@ Schema.prototype.normalize = function(config, options) {
 
   var omit = utils.union([], this.remove, opts.omit);
   config = utils.omit(config, omit);
+
+  // sort object and arrays
+  config = this.sortObject(config, opts);
+  config = this.sortArrays(config);
 
   this.logWarnings(config);
   return config;
