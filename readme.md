@@ -131,7 +131,7 @@ schema
   })
 ```
 
-### [.get](index.js#L186)
+### [.get](index.js#L190)
 
 Get field `name` from the schema. Get a specific property from the field by passing the property name as a second argument.
 
@@ -149,7 +149,7 @@ var field = schema.get('bugs', 'types');
 //=> ['object', 'string']
 ```
 
-### [.omit](index.js#L199)
+### [.omit](index.js#L203)
 
 Omit a property from the returned object. This method can be used
 in normalize functions as a way of removing undesired properties.
@@ -159,7 +159,7 @@ in normalize functions as a way of removing undesired properties.
 * `key` **{String}**: The property to remove
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.update](index.js#L230)
+### [.update](index.js#L234)
 
 Update a property on the returned object. This method will trigger validation
 and normalization of the updated property.
@@ -170,7 +170,7 @@ and normalization of the updated property.
 * `val` **{any}**: Value of the property to update.
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.isOptional](index.js#L254)
+### [.isOptional](index.js#L258)
 
 Returns true if field `name` is an optional field.
 
@@ -179,7 +179,7 @@ Returns true if field `name` is an optional field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.isRequired](index.js#L266)
+### [.isRequired](index.js#L270)
 
 Returns true if field `name` was defined as a required field.
 
@@ -188,7 +188,7 @@ Returns true if field `name` was defined as a required field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.missingFields](index.js#L304)
+### [.missingFields](index.js#L308)
 
 Checks the config object for missing fields and. If found,
 a warning message is pushed onto the `schema.warnings` array,
@@ -199,7 +199,7 @@ which can be used for reporting.
 * `config` **{Object}**
 * `returns` **{Array}**
 
-### [.sortObject](index.js#L335)
+### [.sortObject](index.js#L339)
 
 If a `keys` array is passed on the constructor options, or as a second argument to `sortObject`, this sorts the given object so that keys are in the same order as the supplied array of `keys`.
 
@@ -215,7 +215,7 @@ schema.sortObject({z: '', a: ''}, ['a', 'z']);
 //=> {a: '', z: ''}
 ```
 
-### [.sortArrays](index.js#L364)
+### [.sortArrays](index.js#L368)
 
 When `options.sortArrays` _is not false_, sorts all arrays in the
 given `config` object using JavaScript's native `.localeCompare`
@@ -226,7 +226,7 @@ method.
 * `config` **{Object}**
 * `returns` **{Object}**: returns the config object with sorted arrays
 
-### [.isValidField](index.js#L381)
+### [.isValidField](index.js#L385)
 
 Returns true if the given value is valid for field `key`.
 
@@ -237,7 +237,7 @@ Returns true if the given value is valid for field `key`.
 * `config` **{Object}**
 * `returns` **{Boolean}**
 
-### [.normalize](index.js#L471)
+### [.normalize](index.js#L475)
 
 Normalize the given `config` object.
 
@@ -248,7 +248,7 @@ Normalize the given `config` object.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.normalizeField](index.js#L532)
+### [.normalizeField](index.js#L537)
 
 Normalize a field on the schema.
 
@@ -259,7 +259,7 @@ Normalize a field on the schema.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.visit](index.js#L587)
+### [.visit](index.js#L592)
 
 Visit `method` over the given object or array.
 
@@ -319,10 +319,10 @@ field.validate('name', {});
 
 You might also be interested in these projects:
 
-* [get-value](https://www.npmjs.com/package/get-value): Use property paths (`  a.b.c`) to get a nested value from an object. | [homepage](https://github.com/jonschlinkert/get-value)
+* [get-value](https://www.npmjs.com/package/get-value): Use property paths (`a.b.c`) to get a nested value from an object. | [homepage](https://github.com/jonschlinkert/get-value)
 * [normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json using the map-schema library. | [homepage](https://github.com/jonschlinkert/normalize-pkg)
 * [object.omit](https://www.npmjs.com/package/object.omit): Return a copy of an object excluding the given key, or array of keys. Also… [more](https://www.npmjs.com/package/object.omit) | [homepage](https://github.com/jonschlinkert/object.omit)
-* [object.pick](https://www.npmjs.com/package/object.pick): Returns a filtered copy of an object with only the specified keys, similar to `  _.pick`… [more](https://www.npmjs.com/package/object.pick) | [homepage](https://github.com/jonschlinkert/object.pick)
+* [object.pick](https://www.npmjs.com/package/object.pick): Returns a filtered copy of an object with only the specified keys, similar to `_.pick`… [more](https://www.npmjs.com/package/object.pick) | [homepage](https://github.com/jonschlinkert/object.pick)
 * [set-value](https://www.npmjs.com/package/set-value): Create nested values and any intermediaries using dot notation (`'a.b.c'`) paths. | [homepage](https://github.com/jonschlinkert/set-value)
 
 ## Contributing
@@ -365,4 +365,4 @@ Released under the [MIT license](https://github.com/jonschlinkert/map-schema/blo
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v, on March 27, 2016._
+_This file was generated by [verb](https://github.com/verbose/verb), v, on April 03, 2016._
