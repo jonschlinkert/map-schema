@@ -25,6 +25,7 @@
     "collection-visit": "^0.2.1",
     "component-emitter": "^1.2.0",
     "debug": "^2.2.0",
+    "define-property": "^0.2.5",
     "get-value": "^2.0.2",
     "is-primitive": "^2.0.0",
     "kind-of": "^3.0.2",
