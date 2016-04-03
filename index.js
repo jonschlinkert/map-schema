@@ -133,6 +133,10 @@ Schema.prototype.field = function(name, type, options) {
     return this;
   }
 
+  if (typeof options === 'function') {
+    options = { normalize: options };
+  }
+
   debug('adding field "%s"', name);
   var field = new Field(type, options || {});
   field.name = name;
@@ -490,7 +494,7 @@ Schema.prototype.normalize = function(config, options) {
 
   for (var key in this.fields) {
     if (this.fields.hasOwnProperty(key)) {
-      this.normalizeField.call(this, key, config[key], config);
+      this.normalizeField.call(this, key, config[key], config, opts);
     }
   }
 
@@ -516,6 +520,7 @@ Schema.prototype.normalize = function(config, options) {
   config = this.sortArrays(config);
 
   this.logWarnings(config);
+  utils.define(config, 'isNormalized', true);
   return config;
 };
 
@@ -529,7 +534,7 @@ Schema.prototype.normalize = function(config, options) {
  * @api public
  */
 
-Schema.prototype.normalizeField = function(key, value, config) {
+Schema.prototype.normalizeField = function(key, value, config, options) {
   debug('normalizing field "%s", "%j"', key, util.inspect(value));
 
   if (!this.fields.hasOwnProperty(key)) {
