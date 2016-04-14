@@ -602,9 +602,10 @@ Schema.prototype.visit = function(method, value) {
  * @return {String}
  */
 
-Schema.prototype.logWarnings = function() {
+Schema.prototype.logWarnings = function(warnings) {
+  warnings = warnings || this.warnings;
   var omit = utils.arrayify(this.options.omit);
-  var len = this.warnings.length;
+  var len = warnings.length;
   var idx = -1;
 
   if (this.options.verbose !== true || len === 0) {
@@ -619,7 +620,7 @@ Schema.prototype.logWarnings = function() {
     if (idx > 0) {
       msg += '\n';
     }
-    var warning = this.warnings[idx];
+    var warning = warnings[idx];
     if (omit.indexOf(warning.prop) !== -1) {
       continue;
     }
