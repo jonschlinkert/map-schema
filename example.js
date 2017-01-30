@@ -19,7 +19,6 @@ function verb(config, options) {
   return schema;
 }
 
-
 // create a schema
 var schema = new Schema()
   .field('name', 'string')
@@ -45,7 +44,6 @@ var schema = new Schema()
       if (typeof val !== 'undefined') {
         var schema = verb(schema.options);
         val = config[key] = schema.normalize(val);
-        console.log(val)
         return val;
       }
     }
@@ -54,6 +52,6 @@ var schema = new Schema()
 var pkg = require('./package');
 // normalize an object
 var res = schema.normalize(pkg);
-// console.log(res);
+console.log(res.verb);
 // validation errors array
 // console.log(schema.warnings);
