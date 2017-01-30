@@ -1,15 +1,23 @@
-# map-schema [![NPM version](https://img.shields.io/npm/v/map-schema.svg?style=flat)](https://www.npmjs.com/package/map-schema) [![NPM downloads](https://img.shields.io/npm/dm/map-schema.svg?style=flat)](https://npmjs.org/package/map-schema) [![Build Status](https://img.shields.io/travis/jonschlinkert/map-schema.svg?style=flat)](https://travis-ci.org/jonschlinkert/map-schema)
+# map-schema [![NPM version](https://img.shields.io/npm/v/map-schema.svg?style=flat)](https://www.npmjs.com/package/map-schema) [![NPM monthly downloads](https://img.shields.io/npm/dm/map-schema.svg?style=flat)](https://npmjs.org/package/map-schema)  [![NPM total downloads](https://img.shields.io/npm/dt/map-schema.svg?style=flat)](https://npmjs.org/package/map-schema) [![Linux Build Status](https://img.shields.io/travis/jonschlinkert/map-schema.svg?style=flat&label=Travis)](https://travis-ci.org/jonschlinkert/map-schema)
 
 > Normalize an object by running normalizers and validators that are mapped to a schema.
 
 You might also be interested in [normalize-pkg](https://github.com/jonschlinkert/normalize-pkg).
+
+<details>
+<summary><strong>Table of Contents</strong></summary>
+- [Install](#install)
+- [Usage](#usage)
+- [API](#api)
+- [About](#about)
+</details>
 
 ## Install
 
 Install with [npm](https://www.npmjs.com/):
 
 ```sh
-$ npm install map-schema --save
+$ npm install --save map-schema
 ```
 
 ## Usage
@@ -61,7 +69,7 @@ Validation errors are exposed on `schema.errors`. Error reporting is pretty basi
 
 ## API
 
-### [Schema](index.js#L42)
+### [Schema](index.js#L44)
 
 Create a new `Schema` with the given `options`.
 
@@ -76,15 +84,17 @@ var schema = new Schema()
   .field('name', 'string')
   .field('version', 'string')
   .field('license', 'string')
-  .field('licenses', {
-    validate: function(val, key) {
-      this.warning(key, 'licenses is deprecated. use "license" instead.');
+  .field('licenses', 'array', {
+    normalize: function(val, key, config) {
+       // convert license array to `license` string
+       config.license = val[0].type;
+       delete config[key];
     }
   })
   .normalize(require('./package'))
 ```
 
-### [.set](index.js#L81)
+### [.set](index.js#L84)
 
 Set `key` on the instance with the given `value`.
 
@@ -93,7 +103,7 @@ Set `key` on the instance with the given `value`.
 * `key` **{String}**
 * `value` **{Object}**
 
-### [.warning](index.js#L98)
+### [.warning](index.js#L101)
 
 Push a warning onto the `schema.warnings` array. Placeholder for
 better message handling and a reporter (planned).
@@ -106,7 +116,7 @@ better message handling and a reporter (planned).
 * `value` **{String}**: The value associated with the warning.
 * `returns` **{any}**
 
-### [.field](index.js#L130)
+### [.field](index.js#L133)
 
 Add a field to the schema with the given `name`, `type` or types, and options.
 
@@ -131,7 +141,7 @@ schema
   })
 ```
 
-### [.get](index.js#L190)
+### [.get](index.js#L193)
 
 Get field `name` from the schema. Get a specific property from the field by passing the property name as a second argument.
 
@@ -149,7 +159,7 @@ var field = schema.get('bugs', 'types');
 //=> ['object', 'string']
 ```
 
-### [.omit](index.js#L203)
+### [.omit](index.js#L206)
 
 Omit a property from the returned object. This method can be used
 in normalize functions as a way of removing undesired properties.
@@ -159,7 +169,7 @@ in normalize functions as a way of removing undesired properties.
 * `key` **{String}**: The property to remove
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.update](index.js#L234)
+### [.update](index.js#L237)
 
 Update a property on the returned object. This method will trigger validation
 and normalization of the updated property.
@@ -170,7 +180,7 @@ and normalization of the updated property.
 * `val` **{any}**: Value of the property to update.
 * `returns` **{Object}**: Returns the instance for chaining.
 
-### [.isOptional](index.js#L258)
+### [.isOptional](index.js#L261)
 
 Returns true if field `name` is an optional field.
 
@@ -179,7 +189,7 @@ Returns true if field `name` is an optional field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.isRequired](index.js#L270)
+### [.isRequired](index.js#L273)
 
 Returns true if field `name` was defined as a required field.
 
@@ -188,7 +198,7 @@ Returns true if field `name` was defined as a required field.
 * `name` **{String}**
 * `returns` **{Boolean}**
 
-### [.missingFields](index.js#L308)
+### [.missingFields](index.js#L311)
 
 Checks the config object for missing fields and. If found,
 a warning message is pushed onto the `schema.warnings` array,
@@ -199,7 +209,7 @@ which can be used for reporting.
 * `config` **{Object}**
 * `returns` **{Array}**
 
-### [.sortObject](index.js#L339)
+### [.sortObject](index.js#L342)
 
 If a `keys` array is passed on the constructor options, or as a second argument to `sortObject`, this sorts the given object so that keys are in the same order as the supplied array of `keys`.
 
@@ -215,7 +225,7 @@ schema.sortObject({z: '', a: ''}, ['a', 'z']);
 //=> {a: '', z: ''}
 ```
 
-### [.sortArrays](index.js#L368)
+### [.sortArrays](index.js#L371)
 
 When `options.sortArrays` _is not false_, sorts all arrays in the
 given `config` object using JavaScript's native `.localeCompare`
@@ -226,7 +236,7 @@ method.
 * `config` **{Object}**
 * `returns` **{Object}**: returns the config object with sorted arrays
 
-### [.isValidField](index.js#L385)
+### [.isValidField](index.js#L388)
 
 Returns true if the given value is valid for field `key`.
 
@@ -237,7 +247,7 @@ Returns true if the given value is valid for field `key`.
 * `config` **{Object}**
 * `returns` **{Boolean}**
 
-### [.normalize](index.js#L475)
+### [.normalize](index.js#L478)
 
 Normalize the given `config` object.
 
@@ -248,7 +258,7 @@ Normalize the given `config` object.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.normalizeField](index.js#L537)
+### [.normalizeField](index.js#L546)
 
 Normalize a field on the schema.
 
@@ -259,7 +269,7 @@ Normalize a field on the schema.
 * **{Object}**: config
 * `returns` **{Object}**
 
-### [.visit](index.js#L592)
+### [.visit](index.js#L601)
 
 Visit `method` over the given object or array.
 
@@ -315,54 +325,66 @@ field.validate('name', {});
 //=> false
 ```
 
-## Related projects
+### [.normalize](lib/field.js#L114)
 
-You might also be interested in these projects:
+Normalize the field's value.
 
-* [get-value](https://www.npmjs.com/package/get-value): Use property paths (`a.b.c`) to get a nested value from an object. | [homepage](https://github.com/jonschlinkert/get-value)
-* [normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json using the map-schema library. | [homepage](https://github.com/jonschlinkert/normalize-pkg)
-* [object.omit](https://www.npmjs.com/package/object.omit): Return a copy of an object excluding the given key, or array of keys. Also… [more](https://www.npmjs.com/package/object.omit) | [homepage](https://github.com/jonschlinkert/object.omit)
-* [object.pick](https://www.npmjs.com/package/object.pick): Returns a filtered copy of an object with only the specified keys, similar to `_.pick`… [more](https://www.npmjs.com/package/object.pick) | [homepage](https://github.com/jonschlinkert/object.pick)
-* [set-value](https://www.npmjs.com/package/set-value): Create nested values and any intermediaries using dot notation (`'a.b.c'`) paths. | [homepage](https://github.com/jonschlinkert/set-value)
+**Example**
 
-## Contributing
-
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/jonschlinkert/map-schema/issues/new).
-
-## Building docs
-
-Generate readme and API documentation with [verb](https://github.com/verbose/verb):
-
-```sh
-$ npm install verb && npm run docs
+```js
+var field = new Field({
+  types: ['string'],
+  normalize: function(val, key, config, schema) {
+    // do stuff to `val`
+    return val;
+  }
+});
 ```
 
-Or, if [verb](https://github.com/verbose/verb) is installed globally:
+## About
+
+### Related projects
+
+* [get-value](https://www.npmjs.com/package/get-value): Use property paths (`a.b.c`) to get a nested value from an object. | [homepage](https://github.com/jonschlinkert/get-value "Use property paths (`a.b.c`) to get a nested value from an object.")
+* [normalize-pkg](https://www.npmjs.com/package/normalize-pkg): Normalize values in package.json using the map-schema library. | [homepage](https://github.com/jonschlinkert/normalize-pkg "Normalize values in package.json using the map-schema library.")
+* [object.omit](https://www.npmjs.com/package/object.omit): Return a copy of an object excluding the given key, or array of keys. Also… [more](https://github.com/jonschlinkert/object.omit) | [homepage](https://github.com/jonschlinkert/object.omit "Return a copy of an object excluding the given key, or array of keys. Also accepts an optional filter function as the last argument.")
+* [object.pick](https://www.npmjs.com/package/object.pick): Returns a filtered copy of an object with only the specified keys, similar to `_.pick… [more](https://github.com/jonschlinkert/object.pick) | [homepage](https://github.com/jonschlinkert/object.pick "Returns a filtered copy of an object with only the specified keys, similar to`_.pick` from lodash / underscore.")
+* [set-value](https://www.npmjs.com/package/set-value): Create nested values and any intermediaries using dot notation (`'a.b.c'`) paths. | [homepage](https://github.com/jonschlinkert/set-value "Create nested values and any intermediaries using dot notation (`'a.b.c'`) paths.")
+
+### Contributing
+
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](../../issues/new).
+
+### Building docs
+
+_(This project's readme.md is generated by [verb](https://github.com/verbose/verb-generate-readme), please don't edit the readme directly. Any changes to the readme must be made in the [.verb.md](.verb.md) readme template.)_
+
+To generate the readme, run the following command:
 
 ```sh
-$ verb
+$ npm install -g verbose/verb#dev verb-generate-readme && verb
 ```
 
-## Running tests
+### Running tests
 
 Install dev dependencies:
 
 ```sh
-$ npm install -d && npm test
+$ npm install && npm test
 ```
 
-## Author
+### Author
 
 **Jon Schlinkert**
 
 * [github/jonschlinkert](https://github.com/jonschlinkert)
-* [twitter/jonschlinkert](http://twitter.com/jonschlinkert)
+* [twitter/jonschlinkert](https://twitter.com/jonschlinkert)
 
-## License
+### License
 
-Copyright © 2016, [Jon Schlinkert](https://github.com/jonschlinkert).
-Released under the [MIT license](https://github.com/jonschlinkert/map-schema/blob/master/LICENSE).
+Copyright © 2017, [Jon Schlinkert](https://github.com/jonschlinkert).
+MIT
 
 ***
 
-_This file was generated by [verb](https://github.com/verbose/verb), v, on April 03, 2016._
+_This file was generated by [verb-generate-readme](https://github.com/verbose/verb-generate-readme), v0.4.2, on January 30, 2017._
