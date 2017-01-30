@@ -28,9 +28,11 @@ module.exports = Schema;
  *   .field('name', 'string')
  *   .field('version', 'string')
  *   .field('license', 'string')
- *   .field('licenses', {
- *     validate: function(val, key) {
- *       this.warning(key, 'licenses is deprecated. use "license" instead.');
+ *   .field('licenses', 'array', {
+ *     normalize: function(val, key, config) {
+ *        // convert license array to `license` string
+ *        config.license = val[0].type;
+ *        delete config[key];
  *     }
  *   })
  *   .normalize(require('./package'))
@@ -46,7 +48,8 @@ function Schema(options) {
   this.utils = utils;
   this.initSchema();
   this.addFields(this.options);
-  this.options.only = utils.arrayify(this.options.pick || this.options.only);
+  var only = utils.arrayify(this.options.pick || this.options.only);
+  utils.define(this.options, 'only', only);
 }
 
 /**
@@ -147,6 +150,7 @@ Schema.prototype.field = function(name, type, options) {
   if (field.required) {
     this.required.push(name);
   }
+
   this.fields[name] = field;
   return this;
 };
@@ -170,6 +174,7 @@ Schema.prototype.addFields = function(options) {
       this.field(key, val);
     }
   }
+  return this;
 };
 
 /**
@@ -256,7 +261,7 @@ Schema.prototype.update = function(key, val, config) {
  */
 
 Schema.prototype.isOptional = function(name) {
-  return !!this.get(name, 'optional');
+  return this.get(name, 'optional') === true;
 };
 
 /**
@@ -268,7 +273,7 @@ Schema.prototype.isOptional = function(name) {
  */
 
 Schema.prototype.isRequired = function(name) {
-  return !!this.get(name, 'required');
+  return this.get(name, 'required') === true;
 };
 
 /**
@@ -284,6 +289,7 @@ Schema.prototype.isRequired = function(name) {
  */
 
 Schema.prototype.setDefaults = function(config) {
+  config = utils.extend({}, config);
   if (this.options.defaults === false) {
     return config;
   }
@@ -493,6 +499,10 @@ Schema.prototype.normalize = function(config, options) {
   }
 
   for (var key in this.fields) {
+    if (opts.existingOnly === true && !config.hasOwnProperty(key)) {
+      continue;
+    }
+
     if (this.fields.hasOwnProperty(key)) {
       this.normalizeField.call(this, key, config[key], config, opts);
     }
@@ -501,7 +511,8 @@ Schema.prototype.normalize = function(config, options) {
   // check for missing required fields
   this.missingFields(config);
 
-  opts.omit = utils.arrayify(opts.omit);
+  // get omitted keys
+  var omitted = utils.arrayify(opts.omit);
 
   // remove empty objects if specified on options
   if (opts.omitEmpty === true) {
@@ -512,7 +523,7 @@ Schema.prototype.normalize = function(config, options) {
     config = utils.pick(config, pick);
   }
 
-  var omit = utils.union([], this.remove, opts.omit);
+  var omit = utils.union([], this.remove, omitted);
   config = utils.omit(config, omit);
 
   // sort object and arrays
@@ -521,6 +532,7 @@ Schema.prototype.normalize = function(config, options) {
 
   this.logWarnings(config);
   utils.define(config, 'isNormalized', true);
+  this.emit('normalized', config);
   return config;
 };
 

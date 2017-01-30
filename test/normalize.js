@@ -244,4 +244,51 @@ describe('schema.normalize()', function() {
       assert(keys[2], 'foo');
     });
   });
+
+  describe('.normalize', function() {
+    it('should normalize a value', function() {
+      schema.field('foo', ['string'], function(val) {
+        return val + val;
+      });
+
+      var val = schema.normalize({foo: 'bar'});
+      assert.equal(val.foo, 'barbar');
+    });
+
+    it('should normalize multiple values', function() {
+      schema
+        .field('foo', ['string'], function(val) {
+          return 'a';
+        })
+        .field('bar', ['string'], function(val) {
+          return 'b';
+        })
+        .field('baz', ['string'], function(val) {
+          return 'c';
+        })
+
+      var val = schema.normalize({foo: 'bar', bar: '', baz: ''});
+      assert.equal(val.foo, 'a');
+      assert.equal(val.bar, 'b');
+      assert.equal(val.baz, 'c');
+    });
+
+    it('should normalize only existing properties', function() {
+      schema
+        .field('foo', ['string'], function(val) {
+          return 'a';
+        })
+        .field('bar', ['string'], function(val) {
+          return 'b';
+        })
+        .field('baz', ['string'], function(val) {
+          return 'c';
+        })
+
+      var val = schema.normalize({foo: 'bar'}, {existingOnly: true});
+      assert.equal(val.foo, 'a');
+      assert.equal(typeof val.bar, 'undefined');
+      assert.equal(typeof val.baz, 'undefined');
+    });
+  });
 });
