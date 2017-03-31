@@ -10,20 +10,8 @@ describe('schema.field', function() {
     schema = new Schema();
   });
 
-  describe('errors', function() {
-    it('should throw an error when types are not defined', function(cb) {
-      try {
-        schema.field('foo');
-        cb(new Error('expected an error'));
-      } catch (err) {
-        assert.equal(err.message, 'expected type to be a string or array of JavaScript native types');
-        cb();
-      }
-    });
-  });
-
   describe('ctor', function() {
-    it('should add a field when passed on the constructor', function() {
+    it('should add fields when passed on the constructor', function() {
       schema = new Schema({
         fields: {
           bugs: {
@@ -35,7 +23,7 @@ describe('schema.field', function() {
     });
   });
 
-  describe('fields', function() {
+  describe('schema.field', function() {
     it('should add a field to `schema.fields`', function() {
       schema.field('bugs', ['object', 'string']);
       assert(schema.fields.hasOwnProperty('bugs'));
@@ -43,12 +31,12 @@ describe('schema.field', function() {
   });
 
   describe('default', function() {
-    it('should add a default value to schema.defaults', function() {
-      schema.field('bugs', ['object', 'string'], {
-        default: 'foo'
-      });
-      assert(schema.defaults.hasOwnProperty('bugs'));
-    });
+    // it('should add a default value to schema.defaults', function() {
+    //   schema.field('bugs', ['object', 'string'], {
+    //     default: 'foo'
+    //   });
+    //   assert(schema.defaults.hasOwnProperty('bugs'));
+    // });
 
     it('should use the default value when normalize is invoked', function() {
       schema.field('bugs', ['object', 'string'], {
@@ -72,11 +60,14 @@ describe('schema.field', function() {
   });
 
   describe('required', function() {
-    it('should add a required value to the schema.required array', function() {
+    it('should add an error when a required field is undefined', function() {
+      schema = new Schema({strict: true});
       schema.field('bugs', ['object', 'string'], {
-        required: 'foo'
+        required: true
       });
-      assert.equal(schema.required[0], 'bugs');
+
+      schema.normalize({});
+      assert.equal(schema.errors.length, 1);
     });
   });
 });

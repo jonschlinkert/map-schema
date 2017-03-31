@@ -8,17 +8,21 @@
 'use strict';
 
 var util = require('util');
+var omitEmpty = require('omit-empty');
+var omit = require('object.omit');
+var pick = require('object.pick');
+var get = require('get-value');
+var typeOf = require('kind-of');
+var isObject = require('isobject');
+var extend = require('extend-shallow');
+var define = require('define-property');
 var Emitter = require('component-emitter');
 var debug = require('debug')('map-schema');
+var union = require('union-value');
+var Base = require('base');
 var Data = require('./lib/data');
 var Field = require('./lib/field');
 var utils = require('./lib/utils');
-
-/**
- * Expose `Schema`
- */
-
-module.exports = Schema;
 
 /**
  * Create a new `Schema` with the given `options`.
@@ -41,159 +45,120 @@ module.exports = Schema;
  * @api public
  */
 
-function Schema(options) {
-  this.options = options || {};
+function Schema(options, parent) {
+  if (utils.isObject(options) && options.isSchema) {
+    parent = options;
+    options = {};
+  }
+
+  if (Schema.isSchema(options)) {
+    define(options, 'parent', this);
+    return options;
+  }
+
+  define(this, 'isSchema', true);
+  define(this, 'parent', parent);
   this.data = new Data();
-  this.isSchema = true;
-  this.utils = utils;
-  this.initSchema();
-  this.addFields(this.options);
-  var only = utils.arrayify(this.options.pick || this.options.only);
-  utils.define(this.options, 'only', only);
+  this.options = this.mergeOptions(options);
+  this.warnings = [];
+  this.errors = [];
+  this.fields = {};
+  this.cache = {
+    missing: [],
+    omit: [],
+    pick: []
+  };
+
+  if (utils.isObject(this.options.fields)) {
+    this.addFields(this.options.fields);
+  }
 }
 
 /**
- * Inherit Emitter
+ * Field
  */
 
-Emitter(Schema.prototype);
+Schema.prototype.field = function(key, types, options) {
+  if (typeof types !== 'string' && !Array.isArray(types)) {
+    options = types;
+    types = [];
+  }
 
-/**
- * Initalize Schema instance properties
- */
+  var schema = null;
+  if (Schema.isSchema(options)) {
+    schema = options;
+    options = {};
+  }
 
-Schema.prototype.initSchema = function() {
-  this.normalizers = {};
-  this.validators = {};
-  this.defaults = {};
-  this.required = [];
-  this.warnings = [];
-  this.fields = {};
-  this.remove = [];
-  this.fns = [];
-};
+  var field = new Field(types, options, this);
+  var existing = this.fields[key];
+  if (Field.isField(existing) && field.get('extend') === true) {
+    field = utils.merge({}, existing, field);
+  }
 
-/**
- * Set `key` on the instance with the given `value`.
- *
- * @param {String} `key`
- * @param {Object} `value`
- * @api public
- */
+  if (schema) {
+    var normalize = field.normalize;
+    field.normalize = function() {
+      var val = schema.normalize.apply(schema, arguments);
+      field.val = val;
+      return val;
+    };
+  }
 
-Schema.prototype.set = function(key, value) {
-  utils.set(this, key, value);
+  if (field.required) union(this, 'cache.required', key);
+  if (field.optional) union(this, 'cache.optional', key);
+  if (field.nullable) union(this, 'cache.nullable', key);
+
+  field.key = key;
+  this.fields[key] = field;
   return this;
 };
 
 /**
- * Push a warning onto the `schema.warnings` array. Placeholder for
- * better message handling and a reporter (planned).
- *
- * @param {String} `method` The name of the method where the warning is recorded.
- * @param {String} `prop` The name of the field for which the warning is being created.
- * @param {String} `message` The warning message.
- * @param {String} `value` The value associated with the warning.
- * @return {any}
- * @api public
+ * Field
  */
 
-Schema.prototype.warning = function(method, prop, msg, value) {
-  var warning = { method: method, prop: prop, message: msg, args: value };
-  if (typeof value !== 'undefined') {
-    warning.value = value;
-  }
-  this.warnings.push(warning);
-  this.emit('warning', method, prop, warning);
-  return this;
+Schema.prototype.set = function(prop, val) {
+  set(this, prop, val);
+  return tihs;
 };
 
 /**
- * Add a field to the schema with the given `name`, `type` or types,
- * and options.
- *
- * ```js
- * var semver = require('semver');
- *
- * schema
- *   .field('keywords', 'array')
- *   .field('version', 'string', {
- *     validate: function(val, key, config, schema) {
- *       return semver.valid(val) !== null;
- *     }
- *   })
- * ```
- * @param {String} `name`
- * @param {String|Array} `type`
- * @param {Object} `options`
- * @return {Object} Returns the instance for chaining.
- * @api public
+ * Field
  */
 
-Schema.prototype.field = function(name, type, options) {
-  var pick = utils.arrayify(this.options.pick || this.options.only);
-  if (pick && pick.length && !utils.hasElement(name, pick)) {
-    return this;
+Schema.prototype.get = function(key, prop) {
+  var field = get(this.fields, key);
+  if (typeof prop === 'string') {
+    return field.get(prop);
   }
-
-  if (typeof options === 'function') {
-    options = { normalize: options };
-  }
-
-  debug('adding field "%s"', name);
-  var field = new Field(type, options || {});
-  field.name = name;
-
-  if (field.hasOwnProperty('default')) {
-    this.defaults[name] = field.default;
-  }
-  if (field.required) {
-    this.required.push(name);
-  }
-
-  this.fields[name] = field;
-  return this;
+  return field;
 };
 
-/**
- * Add an object of fields to `schema.fields`. If `options.extend` is true,
- * and a field with the given name already exists, the new field will extend
- * the existing field.
- *
- * @param {Object} `options`
- */
+Schema.prototype.mergeOptions = function(options) {
+  var opts = extend({}, this.options);
+  if (!options) return opts;
 
-Schema.prototype.addFields = function(options) {
-  options = options || {};
-  if (options.fields) {
-    for (var key in options.fields) {
-      var val = options.fields[key];
-      if (this.fields[key] && (val.extend || options.extend)) {
-        val = utils.merge({}, val, this.fields[key]);
+  var keys = Object.keys(options);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var val = options[key];
+
+    switch (key) {
+      case 'omit':
+        union(this.cache, 'omit', val);
+        break;
+      case 'only':
+      case 'pick':
+        union(this.cache, 'pick', val);
+        break;
+      default: {
+        opts[key] = val;
       }
-      this.field(key, val);
     }
   }
-  return this;
-};
 
-/**
- * Get field `name` from the schema. Get a specific property from
- * the field by passing the property name as a second argument.
- *
- * ```js
- * schema.field('bugs', ['object', 'string']);
- * var field = schema.get('bugs', 'types');
- * //=> ['object', 'string']
- * ```
- * @param {Strign} `name`
- * @param {String} `prop`
- * @return {Object|any} Returns the field instance or the value of `prop` if specified.
- * @api public
- */
-
-Schema.prototype.get = function(name, prop) {
-  return utils.get(this.fields, prop ? [name, prop] : name);
+  return opts;
 };
 
 /**
@@ -206,24 +171,182 @@ Schema.prototype.get = function(name, prop) {
  */
 
 Schema.prototype.omit = function(key) {
-  this.remove.push(key);
+  union(this, 'cache.omit', key);
   return this;
 };
 
 /**
- * Remove `key` from the `config` object.
+ * Omit a property from the returned object. This method can be used
+ * in normalize functions as a way of removing undesired properties.
  *
- * @param {String} key
- * @param {Object} config
- * @return {undefined} The object is modified in place
+ * @param {String} `key` The property to remove
+ * @return {Object} Returns the instance for chaining.
+ * @api public
  */
 
-Schema.prototype.removeKey = function(key, config) {
-  if (this.remove.indexOf(key) !== -1) {
-    delete this.defaults[key];
-    delete config[key];
-    return true;
+Schema.prototype.missing = function(key) {
+  if (utils.isObject(key)) {
+    var keys = this.cache.required || [];
+    var config = key;
+
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (typeof config[key] === 'undefined') {
+        union(this, 'cache.missing', key);
+      }
+    }
+  } else {
+    union(this, 'cache.missing', key);
   }
+  return this.cache.missing;
+};
+
+/**
+ * Returns true if field `name` is an optional field.
+ *
+ * @param {String} `name`
+ * @return {Boolean}
+ * @api public
+ */
+
+Schema.prototype.isOptional = function(name) {
+  return this.get(name, 'optional');
+};
+
+/**
+ * Returns true if field `name` was defined as a required field.
+ *
+ * @param {String} `name`
+ * @return {Boolean}
+ * @api public
+ */
+
+Schema.prototype.isRequired = function(name) {
+  return this.get(name, 'required');
+};
+
+/**
+ * Returns true if field `name` was defined as a nullable field.
+ *
+ * @param {String} `name`
+ * @return {Boolean}
+ * @api public
+ */
+
+Schema.prototype.isNullable = function(name) {
+  return this.get(name, 'nullable');
+};
+
+/**
+ * Returns true if `field.isValidType()` returns true for the given `val`.
+ *
+ * @param {String|Object} `field` Field object, or key of a registered field.
+ * @return {Boolean}
+ * @api public
+ */
+
+Schema.prototype.isValidType = function(field, val) {
+  if (typeof field === 'string') {
+    field = this.fields[field];
+  }
+
+  if (!Field.isField(field)) {
+    throw new Error('expected an instance of Field');
+  }
+
+  return field.isValidType(val);
+};
+
+/**
+ * Add an object of fields to `schema.fields`. If `options.extend` is true,
+ * and a field with the given name already exists, the new field will extend
+ * the existing field.
+ *
+ * @param {Object} `options`
+ */
+
+Schema.prototype.addFields = function(fields) {
+  if (!utils.isObject(fields)) {
+    throw new TypeError('expected fields to be an object');
+  }
+  var keys = Object.keys(fields);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    this.field(key, fields[key]);
+  }
+  return this;
+};
+
+Schema.prototype.validateField = function(field) {
+  if (!Field.isField(field)) {
+    throw new Error('expected an instance of Field');
+  }
+
+  if (field.required && typeof field.val === 'undefined') {
+    this.error('required', field);
+    this.missing(field.key);
+    return;
+  }
+
+  if (!field.validate(field.val)) {
+    this.error('invalid', field);
+    return;
+  }
+};
+
+/**
+ * Normalize
+ */
+
+Schema.prototype.normalize = function(config, options) {
+  if (!utils.isObject(config)) {
+    throw new TypeError('expected config to be an object');
+  }
+  var opts = this.mergeOptions(options);
+  var keys = Object.keys(this.fields);
+  this.config = config;
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+
+    if (opts.existingOnly === true && !this.config.hasOwnProperty(key)) {
+      continue;
+    }
+
+    this.validateField(this.normalizeField(key));
+  }
+
+  if (this.cache.omit.length) {
+    this.config = omit(this.config, this.cache.omit);
+  }
+
+  if (this.cache.pick.length) {
+    this.config = pick(this.config, this.cache.pick);
+  }
+
+  if (opts.omitEmpty === true) {
+    this.config = omitEmpty(this.config);
+  }
+
+  if (opts.sortArrays === true) {
+    this.config = utils.sortArrays(this.config);
+  }
+
+  if (Array.isArray(opts.sortBy)) {
+    this.config = this.sortObject(this.config, opts.sortBy);
+  }
+  return this.config;
+};
+
+Schema.prototype.normalizeField = function(key, val) {
+  var field = this.fields[key];
+  var config = this.config;
+  if (typeof val === 'undefined') {
+    val = config[key];
+  }
+  field.normalize(val, key, config, this);
+  this.config[key] = field.val;
+  return field;
 };
 
 /**
@@ -237,94 +360,8 @@ Schema.prototype.removeKey = function(key, config) {
  */
 
 Schema.prototype.update = function(key, val, config) {
-  debug('updating field "%s"', key);
-
-  if (arguments.length === 2) {
-    config = val;
-    val = config[key];
-  }
-
-  if (typeof val !== 'undefined' && config) {
-    config[key] = val;
-  }
-
-  this.normalizeField(key, val, config);
+  this.normalizeField.apply(this, arguments);
   return this;
-};
-
-/**
- * Returns true if field `name` is an optional field.
- *
- * @param {String} `name`
- * @return {Boolean}
- * @api public
- */
-
-Schema.prototype.isOptional = function(name) {
-  return this.get(name, 'optional') === true;
-};
-
-/**
- * Returns true if field `name` was defined as a required field.
- *
- * @param {String} `name`
- * @return {Boolean}
- * @api public
- */
-
-Schema.prototype.isRequired = function(name) {
-  return this.get(name, 'required') === true;
-};
-
-/**
- * When `options.defaults` is true, any default values defined
- * on fields will be set on properties that aren't set or do not
- * have a value already define.
- *
- * We need to loop over the config again, since defaults might
- * be defined for properties that don't exist on the config.
- *
- * @param {Object} `config`
- * @return {Object} returns the config object with defaults defined.
- */
-
-Schema.prototype.setDefaults = function(config) {
-  config = utils.extend({}, config);
-  if (this.options.defaults === false) {
-    return config;
-  }
-  for (var key in this.defaults) {
-    if (!utils.hasValue(key, config)) {
-      config[key] = this.defaults[key];
-    }
-  }
-  return config;
-};
-
-/**
- * Checks the config object for missing fields and. If found,
- * a warning message is pushed onto the `schema.warnings` array,
- * which can be used for reporting.
- *
- * @param {Object} `config`
- * @return {Array}
- * @api public
- */
-
-Schema.prototype.missingFields = function(config) {
-  if (this.options.required === false) {
-    return false;
-  }
-  var len = this.required.length, i = -1;
-  var res = [];
-  while (++i < len) {
-    var prop = this.required[i];
-    if (!config.hasOwnProperty(prop)) {
-      this.warning('missing', prop);
-      res.push(prop);
-    }
-  }
-  return res;
 };
 
 /**
@@ -342,16 +379,16 @@ Schema.prototype.missingFields = function(config) {
  * @api public
  */
 
-Schema.prototype.sortObject = function(config, options) {
-  var opts = utils.merge({}, this.options, options);
-  var keys = opts.keys;
-
+Schema.prototype.sortObject = function(config, keys) {
   if (Array.isArray(keys) && keys.length) {
-    keys = utils.union(keys, Object.keys(config));
-    var len = keys.length, i = -1;
+    keys = utils.union([], keys, Object.keys(config));
+
+    var len = keys.length;
+    var idx = -1;
     var res = {};
-    while (++i < len) {
-      var key = keys[i];
+
+    while (++idx < len) {
+      var key = keys[idx];
       if (config.hasOwnProperty(key)) {
         res[key] = config[key];
       }
@@ -361,284 +398,67 @@ Schema.prototype.sortObject = function(config, options) {
   return config;
 };
 
-/**
- * When `options.sortArrays` _is not false_, sorts all arrays in the
- * given `config` object using JavaScript's native `.localeCompare`
- * method.
- *
- * @param {Object} `config`
- * @return {Object} returns the config object with sorted arrays
- * @api public
- */
+// Schema.prototype.run = function(val) {
+//   return this.validate(this.normalize(val));
+// };
 
-Schema.prototype.sortArrays = function(config) {
-  if (this.options.sortArrays !== false) {
-    return utils.sortArrays(config);
+Schema.prototype.error = function(message, field) {
+  if (this.options.strict !== true) {
+    return this.warn.apply(this, arguments);
   }
-  return config;
-};
-
-/**
- * Returns true if the given value is valid for field `key`.
- *
- * @param {String} `key`
- * @param {any} `val`
- * @param {Object} `config`
- * @return {Boolean}
- * @api public
- */
-
-Schema.prototype.isValidField = function(key) {
-  var field = this.get(key);
-  if (typeof field === 'undefined') {
-    return this.options.knownOnly !== true;
-  }
-  return field.isValidType(this.config[key], key, this.config, this);
-};
-
-Schema.prototype.isValidType = function(key, val, config) {
-  config = config || {};
-  this.config = config;
-
-  var field = this.get(key);
-  if (typeof field === 'undefined') {
-    if (this.options.knownOnly) {
-      this.warning('invalidField', key);
-      return false;
-    }
-    return true;
-  }
-
-  if (field.isValidType(val, key, config, this)) {
-    return true;
-  }
-
-  if (config.hasOwnProperty(key) || typeof field.normalize === 'function') {
-    if (this.isRequired(key) || typeof val !== 'undefined') {
-      var types = this.get(key, 'types');
-      var warning = {expected: types, actual: val};
-      this.warning('invalidType', key, warning);
-    }
-  }
-  return false;
-};
-
-/**
- * Iterate over the given `config` and validate any properties
- * that have a `field` with a `validate` function on the schema.
- *
- * @param {Object} `config`
- * @return {Object}
- */
-
-Schema.prototype.validate = function(config) {
-  if (!utils.isObject(config)) {
-    throw new TypeError('expected config to be an object');
-  }
-  for (var key in config) {
-    this.validateField(config[key], key, config);
-  }
-  return this.warnings;
-};
-
-/**
- * Validate a single property on the config.
- *
- * @param {any} `val`
- * @param {String} `key`
- * @param {Object} `config`
- * @return {undefined}
- */
-
-Schema.prototype.validateField = function(val, key, config) {
-  var field = this.fields[key];
-
-  if (!utils.isObject(field) && this.options.knownOnly === true) {
-    this.warning('invalidField', key);
-  }
-
-  this.isValidType(key, val, config);
-
-  if (typeof field.validate === 'function') {
-    var isValid = field.validate(val, key, config, this);
-    if (!isValid) {
-      this.warning('invalidValue', key, {actual: val});
-    }
-    return isValid;
-  }
-};
-
-/**
- * Normalize the given `config` object.
- *
- * @param {String} key
- * @param {any} value
- * @param {Object} config
- * @return {Object}
- * @api public
- */
-
-Schema.prototype.normalize = function(config, options) {
-  debug('normalizing config');
-
-  if (utils.typeOf(config) !== 'object') {
-    throw new TypeError('expected config to be an object');
-  }
-
-  options = options || {};
-  this.addFields(options);
-  this.config = config;
-
-  // set defaults and call normalizers
-  config = this.setDefaults(config);
-  var opts = utils.merge({}, this.options, options);
-
-  var pick = utils.arrayify(opts.only || opts.pick);
-  if (pick.length) {
-    this.fields = utils.pick(this.fields, pick);
-  }
-
-  for (var key in this.fields) {
-    if (opts.existingOnly === true && !config.hasOwnProperty(key)) {
-      continue;
-    }
-
-    if (this.fields.hasOwnProperty(key)) {
-      this.normalizeField.call(this, key, config[key], config, opts);
-    }
-  }
-
-  // check for missing required fields
-  this.missingFields(config);
-
-  // get omitted keys
-  var omitted = utils.arrayify(opts.omit);
-
-  // remove empty objects if specified on options
-  if (opts.omitEmpty === true) {
-    config = utils.omitEmpty(config);
-  }
-
-  if (pick.length) {
-    config = utils.pick(config, pick);
-  }
-
-  var omit = utils.union([], this.remove, omitted);
-  config = utils.omit(config, omit);
-
-  // sort object and arrays
-  config = this.sortObject(config, opts);
-  config = this.sortArrays(config);
-
-  this.logWarnings(config);
-  utils.define(config, 'isNormalized', true);
-  this.emit('normalized', config);
-  return config;
-};
-
-/**
- * Normalize a field on the schema.
- *
- * @param {String} key
- * @param {any} value
- * @param {Object} config
- * @return {Object}
- * @api public
- */
-
-Schema.prototype.normalizeField = function(key, value, config, options) {
-  debug('normalizing field "%s", "%j"', key, util.inspect(value));
-
-  if (!this.fields.hasOwnProperty(key)) {
-    this.removeKey(key, config);
-    return;
-  }
-
-  var field = this.fields[key];
-  var val = config[key];
-
-  if (utils.isObject(field)) {
-    field.isNormalized = true;
-    var fn = field.normalize;
-
-    if (typeof fn === 'function' && !this.options.validate) {
-      if (field.isSchema && field.warnings.length) {
-        utils.union(this.warnings, field.warnings);
-      }
-
-      val = fn.call(this, val, key, config, this);
-      if (field.isValidType(val)) {
-        config[key] = val;
-      }
-
-      if (this.removeKey(key, config)) {
-        return;
-      }
-    }
-
-    if (this.isValidType(key, val, config) === false) {
-      return;
-    }
-
-    if (typeof field.validate === 'function' && !this.options.normalize) {
-      if (!this.validateField(val, key, config)) {
-        return;
-      }
-    }
-  } else {
-    this.isValidType(key, val, config);
-  }
-
-  this.removeKey(key, config);
-};
-
-/**
- * Visit `method` over the given object or array.
- *
- * @param {String} `method`
- * @param {Object|Array} `value`
- * @return {Object} Returns the instance for chaining.
- * @api public
- */
-
-Schema.prototype.visit = function(method, value) {
-  utils.visit(this, method, value);
+  this.errors.push({message: message, field: field});
   return this;
 };
 
+Schema.prototype.warn = function(message, field) {
+  this.warnings.push({message: message, field: field});
+  return this;
+};
+
+Schema.isSchema = function(val) {
+  return isObject(val) && val.isSchema === true;
+};
+
 /**
- * Log warnings and warnings that were recorded during normalization.
- *
- * This is a placeholder for a reporter (planned)
- *
- * @return {String}
+ * Expose `Schema`
  */
 
-Schema.prototype.logWarnings = function(warnings) {
-  warnings = warnings || this.warnings;
-  var omit = utils.arrayify(this.options.omit);
-  var len = warnings.length;
-  var idx = -1;
+module.exports = Schema;
 
-  if (this.options.verbose !== true || len === 0) {
-    return;
-  }
+// var foo = new Schema()
+//   .field('a', {default: 'aaa'})
+//   .field('b', {default: 'bbb'})
+//   .field('c', {default: 'ccc'})
 
-  var max = utils.longest(Object.keys(this.fields)).length;
-  var msg = '\n';
+// var bar = new Schema()
+//   .field('d', {default: 'ddd'})
+//   .field('e', {default: 'eee'})
+//   .field('f', {default: 'fff'})
 
-  // warnings body
-  while (++idx < len) {
-    if (idx > 0) {
-      msg += '\n';
-    }
-    var warning = warnings[idx];
-    if (omit.indexOf(warning.prop) !== -1) {
-      continue;
-    }
-    msg += utils.formatWarning(warning, max);
-  }
+// var sub = new Schema()
+//   .field('x', {default: 'xxx'})
+//   .field('y', {default: 'yyy'})
+//   .field('z', {
+//     normalize: function(val) {
+//       console.log(arguments)
+//       return val || 'zzz'
+//     }
+//   })
 
-  // log out warnings
-  console.log(msg);
-};
+// var baz = new Schema()
+//   .field('g', {default: 'ggg'})
+//   .field('h', {default: 'hhh'})
+//   .field('i', sub)
+
+// var config = {baz: {i: {z: null}}};
+// var schema = new Schema()
+//   .field('foo', foo)
+//   .field('bar', bar)
+//   .field('baz', baz)
+//   .field('qux', function() {
+//     return 'zzz';
+//   })
+//   .normalize(config)
+
+
+// console.log(config)
