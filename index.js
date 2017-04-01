@@ -7,12 +7,6 @@
 
 'use strict';
 
-var omitEmpty = require('omit-empty');
-var omit = require('object.omit');
-var pick = require('object.pick');
-var get = require('get-value');
-var isObject = require('isobject');
-var extend = require('extend-shallow');
 var define = require('define-property');
 var Emitter = require('component-emitter');
 var union = require('union-value');
@@ -85,7 +79,7 @@ Schema.prototype.constructor = Schema;
  */
 
 Schema.prototype.mergeOptions = function(options) {
-  var opts = extend({}, this.options);
+  var opts = utils.extend({}, this.options);
   if (!options) return opts;
   if (Array.isArray(options)) {
     options = { sortBy: options };
@@ -143,7 +137,7 @@ Schema.prototype.set = function(key, value) {
  */
 
 Schema.prototype.get = function(key, prop) {
-  var field = get(this.cache.fields, key);
+  var field = utils.get(this.cache.fields, key);
   if (typeof prop === 'string') {
     return field.get(prop);
   }
@@ -168,7 +162,7 @@ Schema.prototype.omit = function(val, keys) {
   }
 
   keys = utils.arrayify(keys || this.cache.omit);
-  return keys.length ? omit(val, keys) : val;
+  return keys.length ? utils.omit(val, keys) : val;
 };
 
 /**
@@ -454,12 +448,12 @@ Schema.prototype.postprocess = function(config, options) {
   }
 
   if (this.cache.pick.length) {
-    config = pick(config, this.cache.pick);
+    config = utils.pick(config, this.cache.pick);
   }
 
   if (utils.isObject(options)) {
     if (options.omitEmpty === true) {
-      config = omitEmpty(config);
+      config = utils.omitEmpty(config);
     }
 
     if (options.sortArrays === true) {
@@ -507,7 +501,7 @@ Schema.prototype.warn = function(message, field) {
 };
 
 Schema.isSchema = function(val) {
-  return isObject(val) && val.isSchema === true;
+  return utils.isObject(val) && val.isSchema === true;
 };
 
 /**
