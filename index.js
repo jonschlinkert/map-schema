@@ -378,7 +378,10 @@ Schema.prototype.normalize = function(config, options) {
   }
 
   if (!utils.isObject(config)) {
-    throw new TypeError('expected config to be an object');
+    if (!this.parent) {
+      throw new TypeError('expected config to be an object');
+    }
+    config = {};
   }
 
   var opts = this.mergeOptions(options);
