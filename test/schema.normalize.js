@@ -178,9 +178,9 @@ describe('schema.normalize()', function() {
       });
 
       var keys = Object.keys(actual);
-      assert(keys[0], 'baz');
-      assert(keys[1], 'foo');
-      assert(keys[2], 'bar');
+      assert.equal(keys[0], 'baz');
+      assert.equal(keys[1], 'foo');
+      assert.equal(keys[2], 'bar');
     });
 
     it('should ignore missing keys', function() {
@@ -188,13 +188,15 @@ describe('schema.normalize()', function() {
       schema.field('baz', 'string');
       schema.field('foo', 'string');
 
-      var config = {foo: '', bar: '', qux: ''};
-      var actual = schema.sortObject(config, ['baz', 'bar', 'foo', 'qux']);
+      var config = {foo: '', bar: '', qux: '', baz: ''};
+      var actual = schema.normalize(config, ['baz', 'bar', 'foo', 'qux']);
       var keys = Object.keys(actual);
 
-      assert(keys[0], 'baz');
-      assert(keys[1], 'bar');
-      assert(keys[2], 'qux');
+      assert.equal(keys.length, 4);
+      assert.equal(keys[0], 'baz');
+      assert.equal(keys[1], 'bar');
+      assert.equal(keys[2], 'foo');
+      assert.equal(keys[3], 'qux');
     });
   });
 });

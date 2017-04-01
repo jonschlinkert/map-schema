@@ -19,25 +19,18 @@ describe('schema.field', function() {
           }
         }
       });
-      assert(schema.fields.hasOwnProperty('bugs'));
+      assert(schema.cache.fields.hasOwnProperty('bugs'));
     });
   });
 
   describe('schema.field', function() {
-    it('should add a field to `schema.fields`', function() {
+    it('should add a field to `schema.cache.fields`', function() {
       schema.field('bugs', ['object', 'string']);
-      assert(schema.fields.hasOwnProperty('bugs'));
+      assert(schema.cache.fields.hasOwnProperty('bugs'));
     });
   });
 
   describe('default', function() {
-    // it('should add a default value to schema.defaults', function() {
-    //   schema.field('bugs', ['object', 'string'], {
-    //     default: 'foo'
-    //   });
-    //   assert(schema.defaults.hasOwnProperty('bugs'));
-    // });
-
     it('should use the default value when normalize is invoked', function() {
       schema.field('bugs', ['object', 'string'], {
         default: 'foo'
