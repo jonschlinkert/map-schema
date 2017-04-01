@@ -1,8 +1,9 @@
 'use strict';
 
 var fs = require('fs');
-var Schema = require('./');
 var isObject = require('isobject');
+var Schema = require('..');
+var pkg = require('../package');
 
 function verb(config, options) {
   var schema = new Schema(options);
@@ -49,9 +50,10 @@ var schema = new Schema()
     }
   })
 
-var pkg = require('./package');
 // normalize an object
 var res = schema.normalize(pkg);
 console.log(res.verb);
+
 // validation errors array
-// console.log(schema.warnings);
+console.log(schema.warnings);
+console.log(schema.errors);

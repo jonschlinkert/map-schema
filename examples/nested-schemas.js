@@ -1,14 +1,14 @@
 'use strict';
 
 var fs = require('fs');
-var Schema = require('./');
 var isObject = require('isobject');
+var Schema = require('..');
+var pkg = require('../package');
 
 var verb = new Schema();
 
 verb.field('toc', ['boolean', 'object'], {
   normalize: function(val, key, config, schema) {
-    // console.log(arguments)
     if (typeof val === 'boolean') {
       val = { render: val };
     }
@@ -60,6 +60,10 @@ function verb2() {
   return schema;
 }
 
-var pkg = require('./package');
 var res = schema.normalize(pkg);
-console.log(schema.config);
+console.log(schema.config.verb);
+
+// validation errors array
+console.log(schema.warnings);
+console.log(schema.errors);
+
