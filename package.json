@@ -10,8 +10,7 @@
   },
   "license": "MIT",
   "files": [
-    "index.js",
-    "lib"
+    "index.js"
   ],
   "main": "index.js",
   "engines": {
@@ -21,62 +20,15 @@
     "test": "mocha"
   },
   "dependencies": {
-    "arr-union": "^3.1.0",
-    "component-emitter": "^1.2.1",
-    "define-property": "^0.2.5",
-    "extend-shallow": "^2.0.1",
-    "get-value": "^2.0.6",
-    "is-primitive": "^2.0.0",
-    "kind-of": "^3.1.0",
-    "koalas": "^1.0.1",
-    "mixin-deep": "^1.2.0",
-    "object.omit": "^2.0.1",
-    "object.pick": "^1.2.0",
-    "omit-empty": "^0.4.1",
-    "set-value": "^0.4.3",
-    "sort-object-arrays": "^0.1.1",
-    "union-value": "^1.0.0"
+    "kind-of": "^6.0.2",
+    "mixin-deep": "^2.0.0"
   },
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-eslint": "^3.0.1",
-    "gulp-format-md": "^0.1.11",
-    "gulp-istanbul": "^1.1.1",
-    "gulp-mocha": "^4.2.0",
     "isobject": "^3.0.0",
     "mocha": "^3.2.0"
   },
   "keywords": [
     "map",
     "schema"
-  ],
-  "verb": {
-    "run": true,
-    "toc": "collapsible",
-    "layout": "default",
-    "tasks": [
-      "readme"
-    ],
-    "plugins": [
-      "gulp-format-md"
-    ],
-    "related": {
-      "highlight": "normalize-pkg",
-      "list": [
-        "get-value",
-        "normalize-pkg",
-        "object.omit",
-        "object.pick",
-        "set-value"
-      ]
-    },
-    "reflinks": [
-      "isobject",
-      "normalize-pkg",
-      "verb"
-    ],
-    "lint": {
-      "reflinks": true
-    }
-  }
+  ]
 }
