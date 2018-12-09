@@ -21,14 +21,28 @@
   },
   "dependencies": {
     "kind-of": "^6.0.2",
-    "mixin-deep": "^2.0.0"
+    "mixin-deep": "^2.0.0",
+    "superstruct": "^0.6.0"
   },
   "devDependencies": {
-    "isobject": "^3.0.0",
-    "mocha": "^3.2.0"
+    "gulp-format-md": "^2.0.0",
+    "mocha": "^5.2.0"
   },
   "keywords": [
     "map",
     "schema"
-  ]
+  ],
+  "verb": {
+    "toc": "foo",
+    "layout": "default",
+    "tasks": [
+      "readme"
+    ],
+    "plugins": [
+      "gulp-format-md"
+    ],
+    "lint": {
+      "reflinks": true
+    }
+  }
 }

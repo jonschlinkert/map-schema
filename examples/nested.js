@@ -1,41 +1,37 @@
 'use strict';
 
-var Schema = require('..');
+const Schema = require('..');
 
-var sub = new Schema()
-  .field('x', {default: 'xxx'})
-  .field('y', {default: 'yyy'})
+let sub = new Schema()
+  .field('x', { default: 'xxx' })
+  .field('y', { default: 'yyy' })
   .field('z', {
-    normalize: function(val) {
-      return val || 'zzz'
+    format(value) {
+      return value == null ? 'zzz' : value;
     }
-  })
+  });
 
-var foo = new Schema()
-  .field('a', {default: 'aaa'})
-  .field('b', {default: 'bbb'})
-  .field('c', {default: 'ccc'})
+let foo = new Schema()
+  .field('a', { default: 'aaa' })
+  .field('b', { default: 'bbb' })
+  .field('c', { default: 'ccc' });
 
-var bar = new Schema()
-  .field('d', {default: 'ddd'})
-  .field('e', {default: 'eee'})
-  .field('f', {default: 'fff'})
+let bar = new Schema()
+  .field('d', { default: 'ddd' })
+  .field('e', { default: 'eee' })
+  .field('f', { default: 'fff' });
 
-var baz = new Schema()
-  .field('g', {default: 'ggg'})
-  .field('h', {default: 'hhh'})
+let baz = new Schema()
+  .field('g', { default: 'ggg' })
+  .field('h', { default: 'hhh' })
   .field('i', sub)
-  .field('j', {default: 'jjj'})
+  .field('j', { default: 'jjj' });
 
-var config = {baz: {i: {z: null}}, foo: 'bar'};
-var schema = new Schema()
+let result = new Schema()
   .field('foo', foo)
   .field('bar', bar)
   .field('baz', baz)
-  .field('qux', function() {
-    return 'zzz';
-  })
-  .normalize(config)
+  .field('qux', { format: () => 'zzz' })
+  .format({ baz: { i: { z: null } }, foo: 'bar' });
 
-
-console.log(config)
+console.log(result);

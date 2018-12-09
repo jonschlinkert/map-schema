@@ -1,9 +1,9 @@
 'use strict';
 
 require('mocha');
-var assert = require('assert');
-var Schema = require('..');
-var schema;
+const assert = require('assert');
+const Schema = require('..');
+let schema;
 
 describe('schema.field', function() {
   beforeEach(function() {
@@ -15,38 +15,40 @@ describe('schema.field', function() {
       schema = new Schema({
         fields: {
           bugs: {
-            types: ['object', 'string']
+            schema: ['object', 'string']
           }
         }
       });
-      assert(schema.cache.fields.hasOwnProperty('bugs'));
+      assert(schema.fields.has('bugs'));
     });
   });
 
   describe('schema.field', function() {
     it('should add a field to `schema.cache.fields`', function() {
       schema.field('bugs', ['object', 'string']);
-      assert(schema.cache.fields.hasOwnProperty('bugs'));
+      assert(schema.fields.has('bugs'));
     });
   });
 
   describe('default', function() {
     it('should use the default value when normalize is invoked', function() {
-      schema.field('bugs', ['object', 'string'], {
+      schema.field('bugs', {
+        schema: ['object', 'string'],
         default: 'foo'
       });
 
-      var config = schema.normalize({});
+      let config = schema.format({});
       assert(config.hasOwnProperty('bugs'));
       assert.equal(config.bugs, 'foo');
     });
 
     it('should not overwrite an existing value with the default value', function() {
-      schema.field('bugs', ['object', 'string'], {
+      schema.field('bugs', {
+        schema: ['object', 'string'],
         default: 'foo'
       });
 
-      var config = schema.normalize({bugs: 'bar'});
+      let config = schema.format({bugs: 'bar'});
       assert(config.hasOwnProperty('bugs'));
       assert.equal(config.bugs, 'bar');
     });
@@ -54,13 +56,14 @@ describe('schema.field', function() {
 
   describe('required', function() {
     it('should add an error when a required field is undefined', function() {
-      schema = new Schema({strict: true});
-      schema.field('bugs', ['object', 'string'], {
+      schema = new Schema();
+      schema.field('bugs', {
+        schema: ['object', 'string'],
         required: true
       });
 
-      schema.normalize({});
-      assert.equal(schema.errors.length, 1);
+      schema.format({});
+      assert.equal(schema.state.errors.size, 1);
     });
   });
 });

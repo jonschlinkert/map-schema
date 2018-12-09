@@ -1,69 +1,58 @@
 'use strict';
 
-var fs = require('fs');
-var isObject = require('isobject');
-var Schema = require('..');
-var pkg = require('../package');
+const fs = require('fs');
+const typeOf = require('kind-of');
+// const pkg = require('../package');
+const Schema = require('..');
+const verb = new Schema();
+const pkg = {};
 
-var verb = new Schema();
-
-verb.field('toc', ['boolean', 'object'], {
-  normalize: function(val, key, config, schema) {
-    if (typeof val === 'boolean') {
-      val = { render: val };
+verb.field('toc', {
+  schema: ['boolean', 'object'],
+  format(value) {
+    if (typeOf(value) !== 'object') {
+      value = { render: value };
     }
-    return val;
+    value.render = value.render === true;
+    return value;
   }
 });
 
 // create a schema
-var schema = new Schema()
-  .field('name', 'string')
-  .field('description', 'string')
-  .field('repository', ['object', 'string'], {
-    normalize: function(val) {
-      return isObject(val) ? val.url : val;
+let schema = new Schema()
+  .field('name', { schema: 'string'})
+  .field('description', { schema: 'string'})
+  .field('repository', {
+    schema: ['object', 'string'],
+    format(value) {
+      if (typeOf(value) === 'object') {
+        return value.url;
+      }
+      return value;
     }
   })
-  .field('main', 'string', {
-    validate: function(filepath) {
-      return fs.existsSync(filepath);
+  .field('main', {
+    schema: 'string',
+    validate(value) {
+      return fs.existsSync(value);
     }
   })
-  .field('version', 'string', {
+  .field('version', {
+    schema: 'string',
     default: '0.1.0'
   })
-  .field('license', 'string', {
+  .field('license', {
+    schema: 'string',
     default: 'MIT'
   })
-  .field('verb', ['object'], verb)
-  .field('zzz', ['object'], verb2)
-  .field('blah', function() {
-    return 'whatever';
+  .field('verb', verb)
+  .field('blah', {
+    format() {
+      return 'whatever';
+    }
   })
 
-function verb2() {
-  var schema = new Schema();
-
-  schema.field('toc', ['boolean', 'object'], {
-    normalize: function(val, key, config, schema) {
-      if (typeof val === 'undefined') {
-        val = true;
-      }
-      if (typeof val === 'boolean') {
-        val = { render: val };
-      }
-      return val;
-    }
-  });
-
-  return schema;
-}
-
-var res = schema.normalize(pkg);
-console.log(schema.config.verb);
-
-// validation errors array
-console.log(schema.warnings);
-console.log(schema.errors);
+let res = schema.format(pkg, { sortBy: ['name', 'version'] });
+console.log(res)
+// console.log(schema.state);
 

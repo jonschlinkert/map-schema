@@ -1,12 +1,12 @@
 'use strict';
 
-var fs = require('fs');
-var isObject = require('isobject');
-var Schema = require('..');
-var pkg = require('../package');
+const fs = require('fs');
+const typeOf = require('kind-of');
+const pkg = require('../package');
+const Schema = require('..');
 
 function verb(config, options) {
-  var schema = new Schema(options);
+  let schema = new Schema(options);
 
   schema.field('toc', ['boolean', 'object'], {
     normalize: function(val, key, config, schema) {
@@ -21,12 +21,12 @@ function verb(config, options) {
 }
 
 // create a schema
-var schema = new Schema()
+let schema = new Schema()
   .field('name', 'string')
   .field('description', 'string')
   .field('repository', ['object', 'string'], {
     normalize: function(val) {
-      return isObject(val) ? val.url : val;
+      return typeOf(val) === 'object' ? val.url : val;
     }
   })
   .field('main', 'string', {
@@ -43,7 +43,7 @@ var schema = new Schema()
   .field('verb', ['object'], {
     normalize: function(val, key, config, schema) {
       if (typeof val !== 'undefined') {
-        var schema = verb(schema.options);
+        let schema = verb(schema.options);
         val = config[key] = schema.normalize(val);
         return val;
       }
@@ -51,7 +51,7 @@ var schema = new Schema()
   })
 
 // normalize an object
-var res = schema.normalize(pkg);
+let res = schema.normalize(pkg);
 console.log(res.verb);
 
 // validation errors array
