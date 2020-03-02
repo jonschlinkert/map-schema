@@ -1,8 +1,8 @@
 'use strict';
 
-var fs = require('fs');
-var Schema = require('./');
-var isObject = require('isobject');
+const fs = require('fs');
+const Schema = require('./');
+const isObject = require('isobject');
 
 function verb(config, options) {
   var schema = new Schema(options);
